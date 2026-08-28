@@ -1,0 +1,6 @@
+// Contains API Endpoints for reports of event logs
+api_group "Event Logs" {
+  canonical = "goQIt_1N"
+  swagger = {token: "394JnWYKvLHg4LgXYQxWceSVCDY"}
+  tags = ["xano:quick-start"]
+}
