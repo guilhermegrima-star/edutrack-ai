@@ -23,4 +23,5 @@ query "user/{user_id}" verb=PATCH {
   }
 
   response = $user
+  guid = "THPG62ysNGxH2w5DVcUlp8pXbYQ"
 }

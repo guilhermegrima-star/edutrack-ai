@@ -18,4 +18,5 @@ table PAPEL {
   ]
 
   tags = ["modulo do cadastro"]
+  guid = "yTWj6u9wVSKJnVUKu-8fi2UcQ0Y"
 }

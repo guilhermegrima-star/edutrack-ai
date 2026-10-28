@@ -19,4 +19,5 @@ query "produtos/{produtos_id}" verb=GET {
   }
 
   response = $produtos
+  guid = "XkzI5FgIaw-LldYydTvASU9xpN0"
 }

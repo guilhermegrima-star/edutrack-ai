@@ -23,4 +23,5 @@ query "produtos/{produtos_id}" verb=PATCH {
   }
 
   response = $produtos
+  guid = "t7SBlkxjLUIMcwpco4ifo8ALHpU"
 }

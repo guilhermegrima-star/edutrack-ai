@@ -23,4 +23,5 @@ query "cep/{cep_id}" verb=PATCH {
   }
 
   response = $cep
+  guid = "UHCV2gzw0FolGENtyksZSPSP2tU"
 }

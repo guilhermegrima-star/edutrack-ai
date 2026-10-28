@@ -23,4 +23,5 @@ query "status_transacao/{status_transacao_id}" verb=PATCH {
   }
 
   response = $status_transacao
+  guid = "rDJNFOCNghFdkxipuQo56ofTEsc"
 }

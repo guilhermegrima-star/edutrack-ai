@@ -26,4 +26,5 @@ table CLIENTE {
   ]
 
   tags = ["modulo do cadastro"]
+  guid = "e9TN0r1zXA-3ZKqoN6js4Zz6-TE"
 }

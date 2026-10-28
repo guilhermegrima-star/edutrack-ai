@@ -16,4 +16,5 @@ query user verb=POST {
   }
 
   response = $user
+  guid = "epzzzppiSUmNxb-xzSDNxonZ7-4"
 }

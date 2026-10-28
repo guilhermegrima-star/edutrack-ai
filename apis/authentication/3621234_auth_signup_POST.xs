@@ -54,4 +54,5 @@ query "auth/signup" verb=POST {
 
   response = {authToken: $authToken, user_id: $user.id}
   tags = ["xano:quick-start"]
+  guid = "rUG4j5xdPgFjFGPIKXqnl6q3lKo"
 }

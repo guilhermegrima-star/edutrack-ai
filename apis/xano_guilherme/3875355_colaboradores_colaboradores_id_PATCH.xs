@@ -23,4 +23,5 @@ query "colaboradores/{colaboradores_id}" verb=PATCH {
   }
 
   response = $model
+  guid = "WU8eQfmKl_A5i5sO2jpsOP3iVsE"
 }

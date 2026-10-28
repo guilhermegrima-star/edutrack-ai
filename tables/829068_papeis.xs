@@ -14,4 +14,5 @@ table papeis {
     {type: "primary", field: [{name: "id"}]}
     {type: "btree", field: [{name: "created_at", op: "desc"}]}
   ]
+  guid = "rGe_V9XcdN9CVXEMKeiL4py73H4"
 }

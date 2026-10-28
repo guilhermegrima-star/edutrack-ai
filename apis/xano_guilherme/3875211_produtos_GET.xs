@@ -12,4 +12,5 @@ query produtos verb=GET {
   }
 
   response = $produtos
+  guid = "KsmygdX2WHWykq_uBwOzwBYNLb0"
 }

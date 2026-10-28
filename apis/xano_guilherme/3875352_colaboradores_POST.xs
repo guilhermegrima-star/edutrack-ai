@@ -22,4 +22,5 @@ query colaboradores verb=POST {
   }
 
   response = $model
+  guid = "WdrQK2xIOuDjeZzFdDSbVq4k_wc"
 }

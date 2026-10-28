@@ -24,4 +24,5 @@ query "colaboradores/{colaboradores_id}" verb=PUT {
   }
 
   response = $model
+  guid = "tNUaTFnhyODrb5s4wf7U_dS2V6g"
 }

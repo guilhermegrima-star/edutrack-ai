@@ -14,4 +14,5 @@ query "papeis/{papeis_id}" verb=DELETE {
   }
 
   response = null
+  guid = "YEv1kcPB8aIktGNEPoQMGNxiU1s"
 }

@@ -12,4 +12,5 @@ query teste_status_cliente verb=GET {
   }
 
   response = $teste_status_cliente
+  guid = "-yCoUirBtXTxxC-BSfIdpr1-2CA"
 }

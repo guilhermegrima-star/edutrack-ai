@@ -11,4 +11,5 @@ addon user {
       return = {type: "single"}
     }
   }
+  guid = "fI5VpxYryCJpzhx40j0gOMcUebI"
 }

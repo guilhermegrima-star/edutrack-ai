@@ -16,4 +16,5 @@ query papel verb=POST {
   }
 
   response = $papel
+  guid = "N0bdH_B8O-pAA3DSyqgcO1FiHXw"
 }

@@ -33,4 +33,5 @@ query buscaCliente verb=GET {
 
   response = {result1: $api1, CL: $CLIENTE1}
   tags = ["modulo do cadastro"]
+  guid = "t36UZ9_SpEBDEdfgk6Q5t4yWtSk"
 }

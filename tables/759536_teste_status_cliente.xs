@@ -17,4 +17,5 @@ table "teste-status cliente" {
   ]
 
   tags = ["modulo do cadastro"]
+  guid = "X28hBEz-fzzRyDUT6-OMLonfx5U"
 }

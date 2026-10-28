@@ -16,4 +16,5 @@ query transa_o verb=POST {
   }
 
   response = $transa_o
+  guid = "JfK9OWow1WZ3vkNzHQE6orf3N-8"
 }

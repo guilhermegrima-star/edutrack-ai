@@ -12,4 +12,5 @@ query papeis verb=GET {
   }
 
   response = $papeis
+  guid = "neNCPQ6zF2ca7MFkzJfvV56d2zY"
 }

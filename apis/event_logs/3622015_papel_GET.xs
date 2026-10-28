@@ -12,4 +12,5 @@ query papel verb=GET {
   }
 
   response = $papel
+  guid = "2PxizHFKMzwHgrEYTB4Nig9VnZg"
 }

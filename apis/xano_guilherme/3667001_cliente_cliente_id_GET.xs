@@ -19,4 +19,5 @@ query "cliente/{cliente_id}" verb=GET {
   }
 
   response = $model
+  guid = "xdrOreudZS1XsysAztdlO14SDZY"
 }

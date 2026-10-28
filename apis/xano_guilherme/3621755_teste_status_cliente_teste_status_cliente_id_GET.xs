@@ -19,4 +19,5 @@ query "teste_status_cliente/{teste_status_cliente_id}" verb=GET {
   }
 
   response = $teste_status_cliente
+  guid = "CBKnPzO7qlemdoJE3blAqBiVtyM"
 }

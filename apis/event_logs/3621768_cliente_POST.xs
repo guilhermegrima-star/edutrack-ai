@@ -16,4 +16,5 @@ query cliente verb=POST {
   }
 
   response = $cliente
+  guid = "vr0lkx_0GXxmlpAcZ-UQrv4SBsQ"
 }

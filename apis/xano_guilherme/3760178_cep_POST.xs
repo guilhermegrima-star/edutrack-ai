@@ -16,4 +16,5 @@ query cep verb=POST {
   }
 
   response = $cep
+  guid = "KI7oPXVwUCXm1YvpnfmvaZPUOQc"
 }

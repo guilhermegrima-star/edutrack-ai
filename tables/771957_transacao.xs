@@ -24,4 +24,5 @@ table "TRANSAÇÃO" {
   ]
 
   tags = ["modulo do cadastro"]
+  guid = "fmK35kFw8U9HfWt-ypHJmp2qolU"
 }

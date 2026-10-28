@@ -14,4 +14,5 @@ query "cliente/{cliente_id}" verb=DELETE {
   }
 
   response = null
+  guid = "5UBavgBe7j0gMNxl2M-bGuhmtZQ"
 }

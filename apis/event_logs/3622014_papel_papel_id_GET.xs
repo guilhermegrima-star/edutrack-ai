@@ -19,4 +19,5 @@ query "papel/{papel_id}" verb=GET {
   }
 
   response = $papel
+  guid = "lyVL7rMJvzU52NYp9WA-d4oUs5A"
 }

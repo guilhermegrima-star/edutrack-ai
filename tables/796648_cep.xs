@@ -19,4 +19,5 @@ table CEP {
   ]
 
   tags = ["modulo do cadastro"]
+  guid = "6EvYLlnbnOwdVSU8suZb7-mFXss"
 }

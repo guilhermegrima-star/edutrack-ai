@@ -19,4 +19,5 @@ table "STATUS _TRANSACAO" {
   ]
 
   tags = ["modulo do cadastro"]
+  guid = "pWvT1ygohP9dq6SUV024A2YNwnk"
 }

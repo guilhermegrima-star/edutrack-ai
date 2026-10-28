@@ -14,4 +14,5 @@ query "teste_status_cliente/{teste_status_cliente_id}" verb=DELETE {
   }
 
   response = null
+  guid = "PAtgpNw6cmUhCIyr0NG74yDF-OE"
 }

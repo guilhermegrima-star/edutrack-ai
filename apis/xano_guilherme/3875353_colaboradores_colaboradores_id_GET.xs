@@ -19,4 +19,5 @@ query "colaboradores/{colaboradores_id}" verb=GET {
   }
 
   response = $model
+  guid = "6PvGZfKQWW71ES1OXQdboSHdG0I"
 }

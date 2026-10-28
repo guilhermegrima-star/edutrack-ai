@@ -16,4 +16,5 @@ query produtos verb=POST {
   }
 
   response = $produtos
+  guid = "1WI1jlRU5b0e2A-LCQufabGgW4o"
 }

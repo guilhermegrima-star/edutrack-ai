@@ -19,4 +19,5 @@ query "transa_o/{transa_o_id}" verb=GET {
   }
 
   response = $transa_o
+  guid = "ZMWyxpyrIfUq-Qo5S-qbCcVR-Fg"
 }

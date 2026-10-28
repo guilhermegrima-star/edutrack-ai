@@ -12,4 +12,5 @@ query cliente verb=GET {
   }
 
   response = $model
+  guid = "oIiohlkfda0V_J_sWXMUW0nmeaE"
 }

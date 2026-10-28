@@ -19,4 +19,5 @@ query "papel/{papel_id}" verb=PUT {
   }
 
   response = $model
+  guid = "i0MBHSH_icmpv8l6Al0trWRJSf8"
 }

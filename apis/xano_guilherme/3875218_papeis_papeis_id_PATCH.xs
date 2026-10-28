@@ -23,4 +23,5 @@ query "papeis/{papeis_id}" verb=PATCH {
   }
 
   response = $papeis
+  guid = "x9Klu2WFrh2xyOIAj99aEe3lM2k"
 }

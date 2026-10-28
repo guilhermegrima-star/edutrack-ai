@@ -50,4 +50,5 @@ query "reset/update_password" verb=POST {
       |set:"message":"Password updated"
     )
   tags = ["xano:quick-start"]
+  guid = "xJQFwcziTHQuaHf02TiW_bI03I0"
 }

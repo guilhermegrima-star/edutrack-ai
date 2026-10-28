@@ -14,4 +14,5 @@ query "user/{user_id}" verb=DELETE {
   }
 
   response = null
+  guid = "dZHKsBdimHmt5UVT5Y9cumAGH0o"
 }

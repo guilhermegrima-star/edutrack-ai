@@ -18,4 +18,5 @@ table User {
   ]
 
   tags = ["modulo do cadastro"]
+  guid = "b2bDK2rRIJHgoMXMrPt629KLuws"
 }

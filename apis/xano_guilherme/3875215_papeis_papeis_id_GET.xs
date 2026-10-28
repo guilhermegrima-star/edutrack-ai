@@ -19,4 +19,5 @@ query "papeis/{papeis_id}" verb=GET {
   }
 
   response = $papeis
+  guid = "4T5Hc2eSdAxCLE6WvbaP0FHiSL8"
 }

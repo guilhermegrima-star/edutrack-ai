@@ -25,4 +25,5 @@ query "cliente/{cliente_id}" verb=PUT {
   }
 
   response = $model
+  guid = "bHYSTDC-CJVjFJEB-7UyFIIWsos"
 }

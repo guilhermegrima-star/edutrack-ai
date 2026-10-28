@@ -14,4 +14,5 @@ query "cep/{cep_id}" verb=DELETE {
   }
 
   response = null
+  guid = "2TU4mfUv41jfx32UEw8gT2dMZOg"
 }

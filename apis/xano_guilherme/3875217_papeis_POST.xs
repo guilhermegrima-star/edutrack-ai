@@ -16,4 +16,5 @@ query papeis verb=POST {
   }
 
   response = $papeis
+  guid = "MpTALYJvwLXIix-o8gTeXll8JOE"
 }

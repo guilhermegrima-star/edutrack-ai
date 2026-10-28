@@ -14,4 +14,5 @@ query "produtos/{produtos_id}" verb=DELETE {
   }
 
   response = null
+  guid = "LlHIWC1xCqiDuJ-et0oE3CS72Ug"
 }

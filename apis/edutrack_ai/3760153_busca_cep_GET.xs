@@ -16,4 +16,5 @@ query buscaCEP verb=GET {
 
   response = $CEP1
   tags = ["modulo do cadastro"]
+  guid = "bSB8ibfiy0e-KGk1rPGab_0Hhyg"
 }

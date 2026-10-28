@@ -23,4 +23,5 @@ query "papel/{papel_id}" verb=PATCH {
   }
 
   response = $papel
+  guid = "-zjHqNDWnrCQuGjr9omBjA-uU9Q"
 }

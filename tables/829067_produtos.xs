@@ -14,4 +14,5 @@ table produtos {
     {type: "primary", field: [{name: "id"}]}
     {type: "btree", field: [{name: "created_at", op: "desc"}]}
   ]
+  guid = "j11ECuiIAI7CviMYPik3MO0OGnA"
 }

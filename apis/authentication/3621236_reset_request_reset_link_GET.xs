@@ -70,4 +70,5 @@ query "reset/request-reset-link" verb=GET {
   }
 
   tags = ["xano:quick-start"]
+  guid = "9FLwxi5uOJ24gomL6pqVwy43h78"
 }

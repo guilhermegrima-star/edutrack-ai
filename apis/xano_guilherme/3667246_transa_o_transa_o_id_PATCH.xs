@@ -23,4 +23,5 @@ query "transa_o/{transa_o_id}" verb=PATCH {
   }
 
   response = $transa_o
+  guid = "Tskxl_8z6EIqAN9fHzLU-Fp7E0w"
 }

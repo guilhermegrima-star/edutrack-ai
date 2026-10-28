@@ -14,4 +14,5 @@ query "papel/{papel_id}" verb=DELETE {
   }
 
   response = null
+  guid = "ItTmFD1DMxorekTTYxbBPjgy84A"
 }

@@ -23,4 +23,5 @@ table account {
   ]
 
   tags = ["xano:quick-start"]
+  guid = "ny8yWAEDvYG_siNE6ohJbNk3Cqw"
 }

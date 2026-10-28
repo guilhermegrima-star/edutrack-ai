@@ -14,4 +14,5 @@ query "status_transacao/{status_transacao_id}" verb=DELETE {
   }
 
   response = null
+  guid = "2mOG63bz_hWI1O3d860Et47tFPU"
 }

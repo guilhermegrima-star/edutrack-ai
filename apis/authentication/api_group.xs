@@ -2,4 +2,5 @@
 api_group Authentication {
   canonical = "6Tn0YgRn"
   tags = ["xano:quick-start"]
+  guid = "mStN7opEFrpR7by1Jd41lDokIo4"
 }

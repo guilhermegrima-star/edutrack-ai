@@ -12,4 +12,5 @@ query colaboradores verb=GET {
   }
 
   response = $model
+  guid = "dpGHgyKNjaKZzKz52-oUwnLL9k4"
 }

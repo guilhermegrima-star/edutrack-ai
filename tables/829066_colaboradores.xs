@@ -17,4 +17,5 @@ table colaboradores {
     {type: "primary", field: [{name: "id"}]}
     {type: "btree", field: [{name: "created_at", op: "desc"}]}
   ]
+  guid = "gnSHTA4KxCO6Af8ilmrBUy3y8k0"
 }

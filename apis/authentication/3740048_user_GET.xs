@@ -12,4 +12,5 @@ query user verb=GET {
   }
 
   response = $user
+  guid = "7TOvdx8RZtiI4iDL-aElflZpmho"
 }

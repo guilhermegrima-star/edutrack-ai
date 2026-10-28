@@ -19,4 +19,5 @@ query "papel/{papel_id}" verb=GET {
   }
 
   response = $model
+  guid = "bZkOZ4uO0R_5_D-bMPOkO5adOVo"
 }

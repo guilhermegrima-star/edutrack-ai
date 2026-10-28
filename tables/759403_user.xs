@@ -53,4 +53,5 @@ table user {
   ]
 
   tags = ["xano:quick-start", "modulo do cadastro"]
+  guid = "g8tpjso2orFaPgdxKGzuuR66M1k"
 }

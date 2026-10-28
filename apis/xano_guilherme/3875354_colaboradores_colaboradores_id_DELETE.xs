@@ -14,4 +14,5 @@ query "colaboradores/{colaboradores_id}" verb=DELETE {
   }
 
   response = null
+  guid = "DxgJBHBKFia-a5Kc6FLFHv1f3ZE"
 }

@@ -16,4 +16,5 @@ query teste_status_cliente verb=POST {
   }
 
   response = $teste_status_cliente
+  guid = "Ssp5Eu1acgHZK98Wo0ccyhqQqbY"
 }

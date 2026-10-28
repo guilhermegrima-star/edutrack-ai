@@ -16,4 +16,5 @@ query status_transacao verb=POST {
   }
 
   response = $status_transacao
+  guid = "neTVBqhWA2AQofKPayoUjQ7hwG0"
 }

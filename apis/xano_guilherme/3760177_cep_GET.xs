@@ -12,4 +12,5 @@ query cep verb=GET {
   }
 
   response = $cep
+  guid = "kFryZXqkYs3G_YTQxHdnQlIS__c"
 }

@@ -23,4 +23,5 @@ query "cliente/{cliente_id}" verb=PATCH {
   }
 
   response = $cliente
+  guid = "Ks9cFz6gvnB4ABo-ASoWXyQYuWA"
 }

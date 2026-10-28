@@ -23,4 +23,5 @@ query cliente verb=POST {
   }
 
   response = $model
+  guid = "zz-RJjvOWf_zs55dCHcRA2IHUEw"
 }

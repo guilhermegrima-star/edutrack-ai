@@ -14,4 +14,5 @@ query "transa_o/{transa_o_id}" verb=DELETE {
   }
 
   response = null
+  guid = "vDuq4AEdcJRPkCR0puwykngjFkE"
 }

@@ -108,4 +108,5 @@ query "demo-agent/conversation" verb=POST {
   }
 
   tags = ["xano:quick-start"]
+  guid = "LYqXnGO64tr4WUspM1asR9k0VCA"
 }
