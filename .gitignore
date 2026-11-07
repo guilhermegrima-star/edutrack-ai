@@ -1,0 +1,27 @@
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configurações e Segredos (NÃO versionar credenciais)
+.env
+.env.*
+.streamlit/secrets.toml
+!.streamlit/secrets.toml.example
+
+# Arquivos gerados
+relatorios/*.pdf
+reports/*.pdf
+
+# IDEs e Sistema Operacional
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+

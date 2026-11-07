@@ -42,21 +42,31 @@ import requests
 from dotenv import load_dotenv
 
 # ---------------------------------------------------------------------------
-# Configuração
+# Configuração (Streamlit Secrets / os.environ / .env)
 # ---------------------------------------------------------------------------
 
-load_dotenv()
-
-BASE_URL: str = os.getenv(
-    "EDUTRACK_BASE_URL",
-    # Grupo edutrack.ai (canonical gTfD518O) — endpoints com autenticação de usuário
-    "https://x8ki-letl-twmt.n7.xano.io/api:gTfD518O",
-).rstrip("/")
-
-# Segmento de path do endpoint de tarefas.
-# Sobrescreva via EDUTRACK_TASKS_PATH caso o Xano publique o endpoint com outro nome
-# (ex: "task", "tasks"). O valor padrão reflete o nome definido nos arquivos .xs.
-TASKS_PATH: str = os.getenv("EDUTRACK_TASKS_PATH", "academic_tasks").strip("/")
+try:
+    from utils.config import get_edutrack_base_url, get_tasks_path, get_auth_token
+    BASE_URL: str = get_edutrack_base_url()
+    TASKS_PATH: str = get_tasks_path()
+    DEFAULT_TOKEN: str = get_auth_token()
+except ImportError:
+    try:
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).resolve().parent.parent))
+        from utils.config import get_edutrack_base_url, get_tasks_path, get_auth_token
+        BASE_URL: str = get_edutrack_base_url()
+        TASKS_PATH: str = get_tasks_path()
+        DEFAULT_TOKEN: str = get_auth_token()
+    except Exception:
+        load_dotenv()
+        BASE_URL: str = os.getenv(
+            "EDUTRACK_BASE_URL",
+            "https://x8ki-letl-twmt.n7.xano.io/api:gTfD518O",
+        ).rstrip("/")
+        TASKS_PATH: str = os.getenv("EDUTRACK_TASKS_PATH", "task").strip("/")
+        DEFAULT_TOKEN: str = os.getenv("EDUTRACK_TOKEN", "")
 
 DONE_STATUS: str = "done"  # valor do campo `status` que representa conclusão
 
@@ -356,8 +366,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--token",
         type=str,
-        default=os.getenv("EDUTRACK_TOKEN", ""),
-        help="Token JWT de autenticação (ou defina a env EDUTRACK_TOKEN).",
+        default=DEFAULT_TOKEN,
+        help="Token JWT de autenticação (ou defina a env EDUTRACK_TOKEN / secrets.toml).",
     )
     parser.add_argument(
         "--done-status",

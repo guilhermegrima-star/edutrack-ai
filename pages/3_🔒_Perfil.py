@@ -15,53 +15,24 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# Carregamento da URL Base dos Endpoints (.env)
+# Carregamento de Configurações (st.secrets / utils.config)
 # -----------------------------------------------------------------------------
-def get_auth_base_url() -> str:
-    """
-    Obtém a URL base dos endpoints de autenticação Xano a partir do .env
-    com suporte defensivo a múltiplos locais e fallback seguro.
-    """
-    # 1. Tenta obter diretamente do os.environ
-    url = os.environ.get("XANO_AUTH_BASE_URL")
-    if url:
-        return url.rstrip("/")
-
-    # 2. Tenta carregar usando python-dotenv se estiver instalado
+try:
+    from utils.config import get_xano_auth_url
+    AUTH_BASE_URL = get_xano_auth_url()
+except ImportError:
+    # Suporte a diferentes contextos de execução
     try:
-        from dotenv import load_dotenv
-        load_dotenv()
-        url = os.environ.get("XANO_AUTH_BASE_URL")
-        if url:
-            return url.rstrip("/")
-    except ImportError:
-        pass
-
-    # 3. Varredura manual de caminhos comuns para arquivos .env
-    candidatos_env = [
-        Path(".env"),
-        Path(__file__).resolve().parent / ".env",
-        Path(__file__).resolve().parent.parent / ".env",
-        Path(__file__).resolve().parent.parent.parent / ".env",
-    ]
-
-    for env_path in candidatos_env:
-        if env_path.is_file():
-            try:
-                with open(env_path, "r", encoding="utf-8") as f:
-                    for line in f:
-                        line = line.strip()
-                        if line.startswith("XANO_AUTH_BASE_URL="):
-                            parsed_url = line.split("=", 1)[1].strip().strip('"').strip("'")
-                            if parsed_url:
-                                return parsed_url.rstrip("/")
-            except Exception:
-                continue
-
-    # Fallback canônico do projeto Xano
-    return "https://x8ki-letl-twmt.n7.xano.io/api:6Tn0YgRn"
-
-AUTH_BASE_URL = get_auth_base_url()
+        import sys
+        sys.path.append(str(Path(__file__).resolve().parent.parent))
+        from utils.config import get_xano_auth_url
+        AUTH_BASE_URL = get_xano_auth_url()
+    except Exception:
+        # Fallback defensivo com prioridade para st.secrets
+        if hasattr(st, "secrets") and "XANO_AUTH_BASE_URL" in st.secrets:
+            AUTH_BASE_URL = str(st.secrets["XANO_AUTH_BASE_URL"]).rstrip("/")
+        else:
+            AUTH_BASE_URL = os.environ.get("XANO_AUTH_BASE_URL", "https://x8ki-letl-twmt.n7.xano.io/api:6Tn0YgRn").rstrip("/")
 
 # -----------------------------------------------------------------------------
 # Funções de Comunicação com a API Xano (auth/login, auth/signup, auth/me)
@@ -186,7 +157,7 @@ if "user_data" not in st.session_state:
 # Interface do Usuário (Streamlit)
 # -----------------------------------------------------------------------------
 st.title("🔒 Perfil do Usuário & Autenticação")
-st.caption(f"Integração com Xano API (`{AUTH_BASE_URL}`)")
+st.caption(f"Integração com Xano API (`{AUTH_BASE_URL}`) • Configurações gerenciadas via `st.secrets`")
 
 # Se o usuário já possui token, exibe a tela de Perfil
 if st.session_state["auth_token"]:
