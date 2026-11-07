@@ -225,6 +225,41 @@ if st.session_state["auth_token"]:
 
         st.markdown("---")
         
+        # Seção de Relatório Acadêmico em PDF
+        st.markdown("### 📄 Relatório de Desempenho Acadêmico")
+        st.write("Gere e baixe seu relatório consolidado com disciplinas, carga horária e taxa de conclusão de tarefas em formato PDF.")
+        
+        col_rep1, col_rep2 = st.columns([1, 2])
+        with col_rep1:
+            if st.button("📊 Compilar Relatório PDF", use_container_width=True):
+                with st.spinner("Compilando dados acadêmicos e gerando PDF..."):
+                    try:
+                        from scripts.generate_report import generate_student_report
+                        token = st.session_state["auth_token"]
+                        meta = generate_student_report(token=token, upload=False)
+                        pdf_path = meta.get("pdf_path")
+                        if pdf_path and Path(pdf_path).is_file():
+                            with open(pdf_path, "rb") as f_pdf:
+                                st.session_state["cached_pdf_bytes"] = f_pdf.read()
+                                st.session_state["cached_pdf_name"] = Path(pdf_path).name
+                            st.session_state["cached_pdf_prog"] = meta.get("global_progress_percent", 0.0)
+                            st.success(f"Relatório gerado! Progresso geral apurado: **{meta.get('global_progress_percent')}%**")
+                    except Exception as err:
+                        st.error(f"Erro ao gerar relatório em PDF: {err}")
+
+        with col_rep2:
+            if "cached_pdf_bytes" in st.session_state and st.session_state["cached_pdf_bytes"]:
+                st.download_button(
+                    label="⬇️ Baixar Arquivo PDF Gerado",
+                    data=st.session_state["cached_pdf_bytes"],
+                    file_name=st.session_state.get("cached_pdf_name", "relatorio_desempenho.pdf"),
+                    mime="application/pdf",
+                    type="primary",
+                    use_container_width=True,
+                )
+
+        st.markdown("---")
+        
         col_btn1, col_btn2, _ = st.columns([1, 1, 3])
         with col_btn1:
             if st.button("🔄 Atualizar Perfil", use_container_width=True):
