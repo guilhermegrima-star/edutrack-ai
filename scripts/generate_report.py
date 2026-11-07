@@ -32,23 +32,39 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
+# Importa configurações do utils.config ou fallback
+try:
+    from utils.config import get_edutrack_base_url, get_xano_auth_url, get_auth_token
+    BASE_URL: str = get_edutrack_base_url()
+    AUTH_BASE_URL: str = get_xano_auth_url()
+    DEFAULT_TOKEN: str = get_auth_token()
+except ImportError:
+    try:
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).resolve().parent.parent))
+        from utils.config import get_edutrack_base_url, get_xano_auth_url, get_auth_token
+        BASE_URL = get_edutrack_base_url()
+        AUTH_BASE_URL = get_xano_auth_url()
+        DEFAULT_TOKEN = get_auth_token()
+    except Exception:
+        load_dotenv()
+        BASE_URL = os.getenv("EDUTRACK_BASE_URL", "https://x8ki-letl-twmt.n7.xano.io/api:gTfD518O").rstrip("/")
+        AUTH_BASE_URL = os.getenv(
+            "EDUTRACK_AUTH_URL",
+            os.getenv("XANO_AUTH_BASE_URL", "https://x8ki-letl-twmt.n7.xano.io/api:6Tn0YgRn"),
+        ).rstrip("/")
+        DEFAULT_TOKEN = os.getenv("EDUTRACK_TOKEN", "")
+
 # Importa o cliente base e lógica de cálculo de calculate_progress
 try:
-    from scripts.calculate_progress import BASE_URL, EduTrackClient
+    from scripts.calculate_progress import EduTrackClient
 except ImportError:
     # Fallback se executado a partir do diretório scripts/
     try:
-        from calculate_progress import BASE_URL, EduTrackClient
+        from calculate_progress import EduTrackClient
     except ImportError:
-        BASE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:gTfD518O"
         EduTrackClient = None  # type: ignore
-
-load_dotenv()
-
-AUTH_BASE_URL: str = os.getenv(
-    "EDUTRACK_AUTH_URL",
-    os.getenv("XANO_AUTH_BASE_URL", "https://x8ki-letl-twmt.n7.xano.io/api:authentication"),
-).rstrip("/")
 
 
 # ---------------------------------------------------------------------------
@@ -689,8 +705,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--token",
         type=str,
-        default=os.getenv("EDUTRACK_TOKEN", ""),
-        help="Token JWT Bearer do usuário autenticado (ou defina EDUTRACK_TOKEN no .env).",
+        default=DEFAULT_TOKEN,
+        help="Token JWT Bearer do usuário autenticado (ou defina EDUTRACK_TOKEN / secrets.toml).",
     )
     parser.add_argument(
         "--output",
