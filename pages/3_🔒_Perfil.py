@@ -1,142 +1,80 @@
+"""
+pages/3_🔒_Perfil.py
+--------------------
+Página de Perfil do Usuário no EduTrack AI.
+Reformulada de acordo com os padrões visuais de /assets/home principal.png.
+Formulários de login e cadastro removidos — autenticação centralizada na página principal (app.py).
+"""
+
+from __future__ import annotations
 import os
-import re
 import datetime
 from pathlib import Path
 import streamlit as st
-import requests
 
 # -----------------------------------------------------------------------------
 # Configuração da Página
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Perfil e Autenticação - EduTrack AI",
-    page_icon="🔒",
+    page_title="Perfil do Aluno - EduTrack AI",
+    page_icon="👤",
     layout="wide"
 )
 
 # -----------------------------------------------------------------------------
-# Carregamento de Configurações (st.secrets / utils.config)
+# Utilitários de Tema e Autenticação
 # -----------------------------------------------------------------------------
-try:
-    from utils.config import get_xano_auth_url
-    AUTH_BASE_URL = get_xano_auth_url()
-except ImportError:
-    # Suporte a diferentes contextos de execução
-    try:
-        import sys
-        sys.path.append(str(Path(__file__).resolve().parent.parent))
-        from utils.config import get_xano_auth_url
-        AUTH_BASE_URL = get_xano_auth_url()
-    except Exception:
-        # Fallback defensivo com prioridade para st.secrets
-        if hasattr(st, "secrets") and "XANO_AUTH_BASE_URL" in st.secrets:
-            AUTH_BASE_URL = str(st.secrets["XANO_AUTH_BASE_URL"]).rstrip("/")
-        else:
-            AUTH_BASE_URL = os.environ.get("XANO_AUTH_BASE_URL", "https://x8ki-letl-twmt.n7.xano.io/api:6Tn0YgRn").rstrip("/")
+from utils.theme import (
+    apply_dashboard_theme,
+    render_sidebar_header,
+    render_sidebar_pro_card,
+)
+from utils.auth import (
+    is_authenticated,
+    get_current_user,
+    xano_get_me,
+    perform_logout,
+    guard_authenticated_page,
+)
+
+# Aplica o tema visual unificado
+apply_dashboard_theme()
+
+# Guarda de Acesso: Bloqueia acesso direto deslogado e orienta para app.py
+guard_authenticated_page("o Perfil do Usuário")
+
+# Renderização dos componentes da Sidebar
+render_sidebar_header()
+
+st.sidebar.markdown("---")
+if hasattr(st, "page_link"):
+    st.sidebar.page_link("app.py", label="⊞ Ir para o Dashboard", icon="📊")
+
+render_sidebar_pro_card()
+
+st.sidebar.markdown("---")
+if st.sidebar.button("🚪 Encerrar Sessão (Logout)", use_container_width=True):
+    perform_logout()
 
 # -----------------------------------------------------------------------------
-# Funções de Comunicação com a API Xano (auth/login, auth/signup, auth/me)
+# Carregamento e Atualização dos Dados do Usuário
 # -----------------------------------------------------------------------------
-def xano_login(email: str, password: str) -> tuple[bool, dict | str]:
-    """
-    Executa POST /auth/login
-    Retorna (True, data) ou (False, mensagem_erro)
-    """
-    url = f"{AUTH_BASE_URL}/auth/login"
-    payload = {
-        "email": email.strip().lower(),
-        "password": password
-    }
-    headers = {"Content-Type": "application/json"}
+auth_token = st.session_state.get("auth_token")
+user = get_current_user()
 
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=12)
-        if response.status_code == 200:
-            return True, response.json()
-        
-        # Trata erros retornados pelo Xano
-        try:
-            error_data = response.json()
-            message = error_data.get("message") or error_data.get("error") or "Credenciais inválidas."
-        except Exception:
-            message = f"Erro no servidor ({response.status_code}): {response.text}"
-        return False, message
+if not user and auth_token:
+    with st.spinner("Carregando informações do perfil..."):
+        ok, result = xano_get_me(auth_token)
+        if ok and isinstance(result, dict):
+            st.session_state["user_data"] = result
+            user = result
 
-    except requests.exceptions.RequestException as e:
-        return False, f"Falha de conexão com a API de autenticação: {str(e)}"
-
-def xano_signup(name: str, email: str, password: str) -> tuple[bool, dict | str]:
-    """
-    Executa POST /auth/signup salvando dados na tabela user
-    Retorna (True, data) ou (False, mensagem_erro)
-    """
-    url = f"{AUTH_BASE_URL}/auth/signup"
-    payload = {
-        "name": name.strip(),
-        "email": email.strip().lower(),
-        "password": password
-    }
-    headers = {"Content-Type": "application/json"}
-
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=12)
-        if response.status_code in (200, 201):
-            return True, response.json()
-        
-        try:
-            error_data = response.json()
-            message = error_data.get("message") or error_data.get("error") or "Erro ao realizar cadastro."
-        except Exception:
-            message = f"Erro no servidor ({response.status_code}): {response.text}"
-        return False, message
-
-    except requests.exceptions.RequestException as e:
-        return False, f"Falha de conexão com a API de autenticação: {str(e)}"
-
-def xano_get_me(auth_token: str) -> tuple[bool, dict | str]:
-    """
-    Executa GET /auth/me usando o token Bearer
-    Retorna (True, user_data) ou (False, mensagem_erro)
-    """
-    url = f"{AUTH_BASE_URL}/auth/me"
-    headers = {
-        "Authorization": f"Bearer {auth_token}",
-        "Content-Type": "application/json"
-    }
-
-    try:
-        response = requests.get(url, headers=headers, timeout=12)
-        if response.status_code == 200:
-            return True, response.json()
-        
-        try:
-            error_data = response.json()
-            message = error_data.get("message") or error_data.get("error") or "Sessão inválida ou expirada."
-        except Exception:
-            message = f"Erro na requisição ({response.status_code}): {response.text}"
-        return False, message
-
-    except requests.exceptions.RequestException as e:
-        return False, f"Falha ao conectar com o serviço de perfil: {str(e)}"
-
-def validar_requisitos_senha(senha: str) -> tuple[bool, str]:
-    """
-    Valida as regras da tabela user do Xano (filters: min:8|minAlpha:1|minDigit:1).
-    """
-    if len(senha) < 8:
-        return False, "A senha deve conter no mínimo 8 caracteres."
-    if not re.search(r"[a-zA-Z]", senha):
-        return False, "A senha deve conter pelo menos uma letra."
-    if not re.search(r"\d", senha):
-        return False, "A senha deve conter pelo menos um número."
-    return True, ""
 
 def formatar_data(timestamp_val) -> str:
     """Converte timestamps (ms ou s) para data legível."""
     if not timestamp_val:
         return "N/D"
     try:
-        # Se timestamp em milissegundos
         if isinstance(timestamp_val, (int, float)) and timestamp_val > 1e11:
             timestamp_val = timestamp_val / 1000.0
         dt = datetime.datetime.fromtimestamp(float(timestamp_val))
@@ -144,190 +82,212 @@ def formatar_data(timestamp_val) -> str:
     except Exception:
         return str(timestamp_val)
 
-# -----------------------------------------------------------------------------
-# Inicialização do Estado da Sessão (st.session_state)
-# -----------------------------------------------------------------------------
-if "auth_token" not in st.session_state:
-    st.session_state["auth_token"] = None
-
-if "user_data" not in st.session_state:
-    st.session_state["user_data"] = None
 
 # -----------------------------------------------------------------------------
-# Interface do Usuário (Streamlit)
+# Visualização do Perfil (Estilo /assets/home principal.png)
 # -----------------------------------------------------------------------------
-st.title("🔒 Perfil do Usuário & Autenticação")
-st.caption(f"Integração com Xano API (`{AUTH_BASE_URL}`) • Configurações gerenciadas via `st.secrets`")
+user_name = user.get("name", "Aluno(a)") if user else "Aluno(a)"
+user_email = user.get("email", "aluno@edutrack.ai") if user else "aluno@edutrack.ai"
+user_role = (user.get("role") or "member").capitalize() if user else "Estudante"
+user_id = user.get("id", "N/D") if user else "N/D"
+account_id = user.get("account_id", 0) if user else 0
+membro_desde = formatar_data(user.get("created_at")) if user else "N/D"
 
-# Se o usuário já possui token, exibe a tela de Perfil
-if st.session_state["auth_token"]:
-    user = st.session_state.get("user_data")
+# Banner Superior de Perfil
+st.markdown(
+    f"""
+    <div class="welcome-banner">
+        <div>
+            <h2>Perfil Acadêmico de {user_name} 👤</h2>
+            <p>
+                Gerencie seus dados de acesso, verifique sua matrícula e faça download do seu relatório oficial de desempenho individual.
+            </p>
+        </div>
+        <div class="welcome-avatar-container">
+            🧑‍🎓
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-    # Se ainda não temos os dados do usuário, busca via /auth/me
-    if not user:
-        with st.spinner("Carregando informações do perfil..."):
-            ok, result = xano_get_me(st.session_state["auth_token"])
-            if ok:
-                st.session_state["user_data"] = result
-                user = result
-            else:
-                st.error(f"Não foi possível validar sua sessão: {result}")
-                if st.button("Tentar novamente"):
-                    st.session_state["auth_token"] = None
-                    st.session_state["user_data"] = None
-                    st.rerun()
+# Cartões de Informações Cadastrais
+st.markdown("### 📋 Informações Cadastrais")
 
-    if user:
-        st.success(f"Sessão iniciada como **{user.get('name', 'Usuário')}**")
-        
-        # Painel de Informações do Perfil
-        st.markdown("### 👤 Dados Cadastrais")
-        col1, col2 = st.columns(2)
+col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
+with col_kpi1:
+    st.markdown(
+        f"""
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap" style="background: #EEF2FF; color: #4F46E5;">
+                👤
+            </div>
+            <div>
+                <div class="kpi-label">Nome Completo</div>
+                <div class="kpi-val" style="font-size: 20px; color: #1E293B;">{user_name}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        with col1:
-            st.metric("Nome", user.get("name", "N/D"))
-            st.metric("E-mail", user.get("email", "N/D"))
-            st.metric("Papel / Função (Role)", (user.get("role") or "member").capitalize())
+with col_kpi2:
+    st.markdown(
+        f"""
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap" style="background: #F0FDF4; color: #16A34A;">
+                ✉️
+            </div>
+            <div>
+                <div class="kpi-label">E-mail Cadastrado</div>
+                <div class="kpi-val" style="font-size: 16px; color: #1E293B; word-break: break-all;">{user_email}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        with col2:
-            st.metric("ID de Usuário", user.get("id", "N/D"))
-            st.metric("ID da Conta (Workspace)", user.get("account_id") if user.get("account_id") is not None else 0)
-            st.metric("Membro desde", formatar_data(user.get("created_at")))
+with col_kpi3:
+    st.markdown(
+        f"""
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap" style="background: #FEF3C7; color: #D97706;">
+                🏷️
+            </div>
+            <div>
+                <div class="kpi-label">Tipo de Conta</div>
+                <div class="kpi-val" style="font-size: 20px; color: #1E293B;">{user_role}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        st.markdown("---")
-        
-        # Seção de Relatório Acadêmico em PDF
-        st.markdown("### 📄 Relatório de Desempenho Acadêmico")
-        st.write("Gere e baixe seu relatório consolidado com disciplinas, carga horária e taxa de conclusão de tarefas em formato PDF.")
-        
-        col_rep1, col_rep2 = st.columns([1, 2])
-        with col_rep1:
-            if st.button("📊 Compilar Relatório PDF", use_container_width=True):
-                with st.spinner("Compilando dados acadêmicos e gerando PDF..."):
-                    try:
-                        from scripts.generate_report import generate_student_report
-                        token = st.session_state["auth_token"]
-                        meta = generate_student_report(token=token, upload=False)
-                        pdf_path = meta.get("pdf_path")
-                        if pdf_path and Path(pdf_path).is_file():
-                            with open(pdf_path, "rb") as f_pdf:
-                                st.session_state["cached_pdf_bytes"] = f_pdf.read()
-                                st.session_state["cached_pdf_name"] = Path(pdf_path).name
-                            st.session_state["cached_pdf_prog"] = meta.get("global_progress_percent", 0.0)
-                            st.success(f"Relatório gerado! Progresso geral apurado: **{meta.get('global_progress_percent')}%**")
-                    except Exception as err:
-                        st.error(f"Erro ao gerar relatório em PDF: {err}")
+st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
-        with col_rep2:
-            if "cached_pdf_bytes" in st.session_state and st.session_state["cached_pdf_bytes"]:
-                st.download_button(
-                    label="⬇️ Baixar Arquivo PDF Gerado",
-                    data=st.session_state["cached_pdf_bytes"],
-                    file_name=st.session_state.get("cached_pdf_name", "relatorio_desempenho.pdf"),
-                    mime="application/pdf",
-                    type="primary",
-                    use_container_width=True,
-                )
+col_det1, col_det2, col_det3 = st.columns(3)
+with col_det1:
+    st.markdown(
+        f"""
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap" style="background: #F8FAFC; color: #64748B;">
+                🆔
+            </div>
+            <div>
+                <div class="kpi-label">ID de Registro</div>
+                <div class="kpi-val" style="font-size: 20px; color: #475569;">#{user_id}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        st.markdown("---")
-        
-        col_btn1, col_btn2, _ = st.columns([1, 1, 3])
-        with col_btn1:
-            if st.button("🔄 Atualizar Perfil", use_container_width=True):
-                with st.spinner("Atualizando dados..."):
-                    ok, result = xano_get_me(st.session_state["auth_token"])
-                    if ok:
-                        st.session_state["user_data"] = result
-                        st.success("Dados atualizados!")
-                        st.rerun()
-                    else:
-                        st.error(f"Erro ao atualizar: {result}")
+with col_det2:
+    st.markdown(
+        f"""
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap" style="background: #F8FAFC; color: #64748B;">
+                🏢
+            </div>
+            <div>
+                <div class="kpi-label">Workspace / Turma</div>
+                <div class="kpi-val" style="font-size: 20px; color: #475569;">Conta #{account_id}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        with col_btn2:
-            if st.button("🚪 Sair da Conta (Logout)", type="secondary", use_container_width=True):
-                st.session_state["auth_token"] = None
-                st.session_state["user_data"] = None
-                st.info("Você saiu da conta.")
-                st.rerun()
+with col_det3:
+    st.markdown(
+        f"""
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap" style="background: #F8FAFC; color: #64748B;">
+                📅
+            </div>
+            <div>
+                <div class="kpi-label">Membro Desde</div>
+                <div class="kpi-val" style="font-size: 16px; color: #475569;">{membro_desde}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-else:
-    # Fluxo Deslogado: Abas de Login e Cadastro
-    st.info("Faça login com suas credenciais ou crie uma conta para acessar os recursos personalizados.")
+st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
 
-    tab_login, tab_signup = st.tabs(["🔑 Acessar Conta (Login)", "📝 Criar Nova Conta (Cadastro)"])
+# -----------------------------------------------------------------------------
+# Seção de Relatório Individual em PDF
+# -----------------------------------------------------------------------------
+st.markdown("### 📄 Emissão do Relatório Acadêmico Individual")
+st.markdown(
+    """
+    <div class="activity-card">
+        <div class="activity-header">
+            <div>
+                <div class="activity-title">Boletim Consolidado do Aluno (PDF)</div>
+                <div style="font-size: 13px; color: #64748B; margin-top: 4px;">
+                    Compilação automática com notas por disciplina, assiduidade global e parecer pedagógico.
+                </div>
+            </div>
+            <span class="badge-pill-success">Disponível</span>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-    # -------------------------------------------------------------------------
-    # ABA 1: LOGIN
-    # -------------------------------------------------------------------------
-    with tab_login:
-        st.subheader("Login na Plataforma")
-        with st.form("form_login"):
-            email_login = st.text_input("E-mail", placeholder="seu.email@exemplo.com")
-            senha_login = st.text_input("Senha", type="password", placeholder="Digite sua senha")
-            botao_login = st.form_submit_button("Entrar", type="primary", use_container_width=True)
+col_pdf_act1, col_pdf_act2 = st.columns([1, 2])
 
-        if botao_login:
-            if not email_login or not senha_login:
-                st.warning("Por favor, preencha o e-mail e a senha.")
-            else:
-                with st.spinner("Autenticando..."):
-                    sucesso, resultado = xano_login(email_login, senha_login)
-                    if sucesso:
-                        token = resultado.get("authToken")
-                        st.session_state["auth_token"] = token
-                        
-                        # Imediatamente busca os dados do usuário autenticado via auth/me
-                        ok_me, dados_usuario = xano_get_me(token)
-                        if ok_me:
-                            st.session_state["user_data"] = dados_usuario
-                        
-                        st.success("Login realizado com sucesso!")
-                        st.rerun()
-                    else:
-                        st.error(f"Erro no login: {resultado}")
+with col_pdf_act1:
+    gerar_relatorio = st.button("📊 Compilar Relatório PDF", type="primary", use_container_width=True)
 
-    # -------------------------------------------------------------------------
-    # ABA 2: CADASTRO
-    # -------------------------------------------------------------------------
-    with tab_signup:
-        st.subheader("Cadastro de Novo Usuário")
-        st.markdown(
-            "> **Requisitos da senha:** Mínimo de 8 caracteres, contendo pelo menos 1 letra e 1 dígito."
+with col_pdf_act2:
+    if "cached_pdf_bytes" in st.session_state and st.session_state["cached_pdf_bytes"]:
+        st.download_button(
+            label="⬇️ Baixar Arquivo PDF Gerado",
+            data=st.session_state["cached_pdf_bytes"],
+            file_name=st.session_state.get("cached_pdf_name", "relatorio_desempenho.pdf"),
+            mime="application/pdf",
+            type="primary",
+            use_container_width=True,
         )
 
-        with st.form("form_signup"):
-            nome_signup = st.text_input("Nome Completo", placeholder="Seu nome")
-            email_signup = st.text_input("E-mail", placeholder="seu.email@exemplo.com")
-            senha_signup = st.text_input("Senha", type="password", placeholder="Crie uma senha forte")
-            confirma_senha = st.text_input("Confirme a Senha", type="password", placeholder="Repita a senha")
-            botao_signup = st.form_submit_button("Cadastrar e Entrar", type="primary", use_container_width=True)
+if gerar_relatorio:
+    with st.spinner("Compilando dados acadêmicos e gerando PDF..."):
+        try:
+            from scripts.generate_report import generate_student_report
+            meta = generate_student_report(token=auth_token, upload=False)
+            pdf_path = meta.get("pdf_path")
+            if pdf_path and Path(pdf_path).is_file():
+                with open(pdf_path, "rb") as f_pdf:
+                    st.session_state["cached_pdf_bytes"] = f_pdf.read()
+                    st.session_state["cached_pdf_name"] = Path(pdf_path).name
+                st.session_state["cached_pdf_prog"] = meta.get("global_progress_percent", 0.0)
+                st.success(f"Relatório gerado com sucesso! Progresso geral apurado: **{meta.get('global_progress_percent')}%**")
+                st.rerun()
+        except Exception as err:
+            st.error(f"Erro ao gerar relatório em PDF: {err}")
 
-        if botao_signup:
-            # Validações client-side
-            if not nome_signup.strip():
-                st.warning("O nome é obrigatório.")
-            elif not email_signup.strip() or "@" not in email_signup:
-                st.warning("Insira um endereço de e-mail válido.")
-            elif senha_signup != confirma_senha:
-                st.error("As senhas informadas não coincidem.")
-            else:
-                valida, msg_validacao = validar_requisitos_senha(senha_signup)
-                if not valida:
-                    st.error(msg_validacao)
+st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+
+# -----------------------------------------------------------------------------
+# Ações Rápidas de Conta
+# -----------------------------------------------------------------------------
+col_action1, col_action2, _ = st.columns([1, 1, 2])
+
+with col_action1:
+    if st.button("🔄 Atualizar Informações", use_container_width=True):
+        if auth_token:
+            with st.spinner("Atualizando perfil..."):
+                ok, result = xano_get_me(auth_token)
+                if ok and isinstance(result, dict):
+                    st.session_state["user_data"] = result
+                    st.success("Dados sincronizados com o servidor!")
+                    st.rerun()
                 else:
-                    with st.spinner("Criando conta no sistema..."):
-                        sucesso, resultado = xano_signup(nome_signup, email_signup, senha_signup)
-                        if sucesso:
-                            token = resultado.get("authToken")
-                            st.session_state["auth_token"] = token
-                            
-                            # Carrega perfil recém-criado
-                            ok_me, dados_usuario = xano_get_me(token)
-                            if ok_me:
-                                st.session_state["user_data"] = dados_usuario
+                    st.error(f"Erro ao atualizar: {result}")
 
-                            st.success("Conta criada com sucesso! Você já está autenticado.")
-                            st.rerun()
-                        else:
-                            st.error(f"Erro no cadastro: {resultado}")
-
+with col_action2:
+    if st.button("🚪 Encerrar Sessão", type="secondary", use_container_width=True):
+        perform_logout()
