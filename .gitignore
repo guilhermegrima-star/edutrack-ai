@@ -3,6 +3,7 @@
 venv/
 env/
 ENV/
+.streamlit/ 
 
 # Python cache
 __pycache__/
@@ -12,6 +13,8 @@ __pycache__/
 # Configurações e Segredos (NÃO versionar credenciais)
 .env
 .env.*
+.streamlit/.env
+.streamlit/*.env
 .streamlit/secrets.toml
 !.streamlit/secrets.toml.example
 

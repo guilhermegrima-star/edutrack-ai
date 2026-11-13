@@ -6,21 +6,17 @@ Centraliza as funções de login, signup, verificação de sessão e guarda de p
 """
 
 from __future__ import annotations
-import os
 import re
-from pathlib import Path
 from typing import Any
 import requests
 import streamlit as st
 
 try:
     from utils.config import get_xano_auth_url
-    AUTH_BASE_URL = get_xano_auth_url()
 except ImportError:
-    AUTH_BASE_URL = os.environ.get(
-        "XANO_AUTH_BASE_URL",
-        "https://x8ki-letl-twmt.n7.xano.io/api:6Tn0YgRn"
-    ).rstrip("/")
+    AUTH_BASE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:6Tn0YgRn"
+else:
+    AUTH_BASE_URL = get_xano_auth_url()
 
 
 def xano_login(email: str, password: str) -> tuple[bool, dict | str]:
