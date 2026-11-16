@@ -45,8 +45,8 @@ try:
     BASE_URL = get_edutrack_base_url()
     TASKS_PATH = get_tasks_path()
 except ImportError:
-    BASE_URL = os.environ.get("EDUTRACK_BASE_URL", "https://x8ki-letl-twmt.n7.xano.io/api:gTfD518O").rstrip("/")
-    TASKS_PATH = os.environ.get("EDUTRACK_TASKS_PATH", "task").strip("/")
+    BASE_URL = os.environ.get("EDUTRACK_BASE_URL", "https://x8ki-letl-twmt.n7.xano.io/api:68IBD29v").rstrip("/")
+    TASKS_PATH = os.environ.get("EDUTRACK_TASKS_PATH", "academic_tasks").strip("/")
     get_auth_token = lambda: os.environ.get("EDUTRACK_TOKEN", "")
 
 # Paleta de cores para enriquecimento visual dos cards de matérias
@@ -372,9 +372,12 @@ def get_tasks_by_subject(
     init_tasks_store()
     resolved_token = _resolve_auth_token(token)
 
-    if resolved_token and requests is not None:
+    if requests is not None:
         try:
-            headers = {"Authorization": f"Bearer {resolved_token}", "Content-Type": "application/json"}
+            headers = {"Content-Type": "application/json"}
+            if resolved_token:
+                headers["Authorization"] = f"Bearer {resolved_token}"
+
             params = {}
             if subject_id is not None:
                 params["subject_id"] = int(subject_id)
@@ -467,12 +470,11 @@ def create_task(
 
     created_task: dict[str, Any] | None = None
 
-    if resolved_token and requests is not None:
+    if requests is not None:
         try:
-            headers = {
-                "Authorization": f"Bearer {resolved_token}",
-                "Content-Type": "application/json",
-            }
+            headers = {"Content-Type": "application/json"}
+            if resolved_token:
+                headers["Authorization"] = f"Bearer {resolved_token}"
             endpoints = [f"{BASE_URL}/academic_tasks", f"{BASE_URL}/{TASKS_PATH}"]
             for ep in endpoints:
                 resp = requests.post(ep, headers=headers, json=payload, timeout=8)
@@ -515,18 +517,31 @@ def update_task_status(task_id: int, new_status: str, token: str | None = None) 
     tasks = _get_store_list("academic_tasks_store")
     int_id = int(task_id)
     updated = False
+    target_task = None
     for task in tasks:
         if int(task.get("id", 0)) == int_id:
             task["status"] = str(new_status).strip()
+            target_task = task
             updated = True
             break
 
-    if resolved_token and updated and requests is not None:
+    if updated and requests is not None and target_task is not None:
         try:
-            headers = {"Authorization": f"Bearer {resolved_token}", "Content-Type": "application/json"}
+            headers = {"Content-Type": "application/json"}
+            if resolved_token:
+                headers["Authorization"] = f"Bearer {resolved_token}"
             endpoints = [f"{BASE_URL}/academic_tasks/{int_id}", f"{BASE_URL}/{TASKS_PATH}/{int_id}"]
+            patch_payload = {
+                "title": target_task.get("title", ""),
+                "description": target_task.get("description", ""),
+                "due_date": target_task.get("due_date", ""),
+                "status": str(new_status).strip(),
+                "subject_id": target_task.get("subject_id", 0),
+            }
             for ep in endpoints:
-                resp = requests.patch(ep, headers=headers, json={"status": str(new_status).strip()}, timeout=6)
+                resp = requests.patch(ep, headers=headers, json=patch_payload, timeout=6)
+                if not resp.ok:
+                    resp = requests.put(ep, headers=headers, json=patch_payload, timeout=6)
                 if resp.ok:
                     break
         except Exception:
@@ -546,9 +561,11 @@ def delete_task(task_id: int, token: str | None = None) -> bool:
     filtered = [t for t in tasks if int(t.get("id", 0)) != int_id]
     _set_store_list("academic_tasks_store", filtered)
 
-    if resolved_token and len(filtered) < before_len and requests is not None:
+    if len(filtered) < before_len and requests is not None:
         try:
-            headers = {"Authorization": f"Bearer {resolved_token}"}
+            headers = {}
+            if resolved_token:
+                headers["Authorization"] = f"Bearer {resolved_token}"
             endpoints = [f"{BASE_URL}/academic_tasks/{int_id}", f"{BASE_URL}/{TASKS_PATH}/{int_id}"]
             for ep in endpoints:
                 resp = requests.delete(ep, headers=headers, timeout=6)

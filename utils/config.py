@@ -61,6 +61,41 @@ def _get_from_streamlit_secrets(key: str) -> str | None:
     return None
 
 
+def _get_from_secrets_file(key: str) -> str | None:
+    """Varre arquivos secrets.toml caso st.secrets não esteja acessível."""
+    candidate_paths = [
+        Path(".streamlit/secrets.toml"),
+        Path("edutrack-ai/.streamlit/secrets.toml"),
+        Path(__file__).resolve().parent.parent / ".streamlit" / "secrets.toml",
+        Path(__file__).resolve().parent.parent.parent / ".streamlit" / "secrets.toml",
+    ]
+    for secrets_file in candidate_paths:
+        if secrets_file.is_file():
+            try:
+                try:
+                    import tomllib
+
+                    with open(secrets_file, "rb") as f:
+                        data = tomllib.load(f)
+                        if key in data and data[key] is not None:
+                            return str(data[key]).strip()
+                except Exception:
+                    pass
+
+                with open(secrets_file, "r", encoding="utf-8-sig") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith(f"{key}") and "=" in line:
+                            parts = line.split("=", 1)
+                            if parts[0].strip() == key:
+                                parsed = parts[1].strip().strip('"').strip("'")
+                                if parsed:
+                                    return parsed
+            except Exception:
+                continue
+    return None
+
+
 def _get_from_env_file(key: str) -> str | None:
     """Varre arquivos .env comuns no projeto caso python-dotenv não tenha sido carregado."""
     candidate_paths = [
@@ -87,12 +122,17 @@ def _get_from_env_file(key: str) -> str | None:
 def get_setting(key: str, default: str = "") -> str:
     """
     Retorna o valor da configuração com base na hierarquia:
-    st.secrets -> os.environ -> .env -> default.
+    st.secrets -> .streamlit/secrets.toml -> os.environ -> .env -> default.
     """
     # 1. Streamlit Secrets
     secret_val = _get_from_streamlit_secrets(key)
     if secret_val:
         return secret_val
+
+    # 1.1 Leitura direta de secrets.toml
+    file_secret = _get_from_secrets_file(key)
+    if file_secret:
+        return file_secret
 
     # 2. os.environ
     env_val = os.environ.get(key)
@@ -125,13 +165,13 @@ def get_edutrack_base_url() -> str:
     """Retorna a URL base do grupo edutrack.ai."""
     return get_setting(
         "EDUTRACK_BASE_URL",
-        default="https://x8ki-letl-twmt.n7.xano.io/api:gTfD518O",
+        default="https://x8ki-letl-twmt.n7.xano.io/api:68IBD29v",
     ).rstrip("/")
 
 
 def get_tasks_path() -> str:
     """Retorna o segmento de rota para o endpoint de tarefas acadêmicas."""
-    return get_setting("EDUTRACK_TASKS_PATH", default="task").strip("/")
+    return get_setting("EDUTRACK_TASKS_PATH", default="academic_tasks").strip("/")
 
 
 def get_auth_token() -> str:
