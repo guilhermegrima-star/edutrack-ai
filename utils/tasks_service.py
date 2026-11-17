@@ -217,15 +217,17 @@ def _sync_task_into_store(task: dict[str, Any]):
 def get_subjects(token: str | None = None) -> list[dict[str, Any]]:
     """
     Retorna a lista de disciplinas ativas vinculadas ao usuário autenticado.
-    Consulta GET /subjects no Xano quando autenticado,
+    Consulta GET /subjects no Xano quando disponível,
     atribui paleta de cores para a UI e sincroniza o estado local.
     """
     init_tasks_store()
     resolved_token = _resolve_auth_token(token)
 
-    if resolved_token and requests is not None:
+    if requests is not None:
         try:
-            headers = {"Authorization": f"Bearer {resolved_token}", "Content-Type": "application/json"}
+            headers = {"Content-Type": "application/json"}
+            if resolved_token:
+                headers["Authorization"] = f"Bearer {resolved_token}"
             resp = requests.get(f"{BASE_URL}/subjects", headers=headers, timeout=6)
             if resp.ok:
                 data = resp.json()
@@ -246,6 +248,7 @@ def create_subject(
     name: str,
     teacher: str,
     hours: int,
+    color: str | None = None,
     token: str | None = None,
 ) -> dict[str, Any]:
     """
@@ -256,9 +259,15 @@ def create_subject(
     - name: text (Nome da disciplina, não vazio)
     - teacher: text (Nome do professor - ponto de ligação no contexto das matérias)
     - hours: int (Carga horária em horas > 0)
+    - color: str (Cor de identificação visual nos cards)
     - user_id: int (Atribuído automaticamente como auth.id no Xano)
     """
     init_tasks_store()
+
+    # Compatibilidade caso token seja passado posicionalmente como 4º argumento
+    if color and not token and (len(color) > 30 or not color.startswith("#")):
+        token = color
+        color = None
 
     # Validação rigorosa dos campos
     clean_name = str(name).strip() if name is not None else ""
@@ -285,12 +294,11 @@ def create_subject(
     resolved_token = _resolve_auth_token(token)
     created_subject: dict[str, Any] | None = None
 
-    if resolved_token and requests is not None:
+    if requests is not None:
         try:
-            headers = {
-                "Authorization": f"Bearer {resolved_token}",
-                "Content-Type": "application/json",
-            }
+            headers = {"Content-Type": "application/json"}
+            if resolved_token:
+                headers["Authorization"] = f"Bearer {resolved_token}"
             resp = requests.post(
                 f"{BASE_URL}/subjects",
                 headers=headers,
@@ -326,7 +334,9 @@ def create_subject(
         }
 
     # Atribui cor para os cards visuais na UI
-    if not created_subject.get("color"):
+    if color and str(color).strip():
+        created_subject["color"] = str(color).strip()
+    elif not created_subject.get("color"):
         store = _get_store_list("subjects_store")
         created_subject["color"] = SUBJECT_PALETTE[len(store) % len(SUBJECT_PALETTE)]
 

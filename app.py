@@ -51,10 +51,24 @@ from utils.auth import (
 from utils.tasks_service import (
     get_subjects,
     get_tasks_by_subject,
+    create_subject,
     create_task,
     update_task_status,
     delete_task,
     calculate_subject_progress,
+    SUBJECT_PALETTE,
+)
+from utils.exam_prep_service import (
+    get_exams,
+    get_exam_by_id,
+    create_exam,
+    generate_review_plan,
+    get_mock_questions,
+    update_question_status,
+    record_quiz_answer,
+    calculate_prep_index,
+    get_topic_mastery,
+    get_d1_emergency_review,
 )
 
 # -----------------------------------------------------------------------------
@@ -313,6 +327,7 @@ opcao_menu = st.sidebar.radio(
     [
         "Dashboard",
         "My Courses",
+        "Modo Prova",
     ],
     index=0,
     label_visibility="collapsed",
@@ -862,7 +877,69 @@ elif opcao_menu == "My Courses":
     st.markdown("## 📚 My Courses & Gestão de Obrigações Acadêmicas")
     st.caption("Registre e acompanhe lições, provas e trabalhos vinculados a cada uma de suas disciplinas.")
 
-    # 1. Visão Geral das Disciplinas Matriculadas
+    # 1. Formulário para Registrar Nova Disciplina (Tabela subjects do Xano)
+    with st.expander("➕ Cadastrar Nova Matéria / Disciplina (table subjects)", expanded=False):
+        st.markdown(
+            """
+            <div style="font-size: 13px; color: #64748B; margin-bottom: 12px;">
+                Preencha os campos abaixo conforme o esquema definido na tabela <code>subjects</code> do Xano:
+                <b>name</b> (nome da matéria), <b>teacher</b> (docente), <b>hours</b> (carga horária) e cor de identificação visual.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        with st.form("form_cadastrar_disciplina", clear_on_submit=True):
+            col_s1, col_s2 = st.columns([2, 2])
+            with col_s1:
+                sub_name = st.text_input("Nome da Disciplina (name) *", placeholder="Ex: Engenharia de Software, Cálculo I...")
+            with col_s2:
+                sub_teacher = st.text_input("Professor Responsável (teacher) *", placeholder="Ex: Prof. Dr. Silva, Profª. Mariana...")
+
+            col_s3, col_s4 = st.columns(2)
+            with col_s3:
+                sub_hours = st.number_input("Carga Horária em horas (hours) *", min_value=1, max_value=500, value=60, step=10)
+            with col_s4:
+                cores_disponiveis = {
+                    "#6C5CE7": "Roxo Vibrante (#6C5CE7)",
+                    "#F6C768": "Amarelo Ouro (#F6C768)",
+                    "#4E44B4": "Índigo Profundo (#4E44B4)",
+                    "#10B981": "Verde Esmeralda (#10B981)",
+                    "#3B82F6": "Azul (#3B82F6)",
+                    "#EC4899": "Rosa (#EC4899)",
+                    "#8B5CF6": "Violeta (#8B5CF6)",
+                }
+                idx_cor = len(todas_disciplinas) % len(SUBJECT_PALETTE)
+                sugestao_hex = SUBJECT_PALETTE[idx_cor]
+                sub_color = st.selectbox(
+                    "Cor Identificadora da Disciplina",
+                    options=list(cores_disponiveis.keys()),
+                    index=list(cores_disponiveis.keys()).index(sugestao_hex) if sugestao_hex in cores_disponiveis else 0,
+                    format_func=lambda c: cores_disponiveis[c],
+                )
+
+            btn_criar_disc = st.form_submit_button("Criar Disciplina", use_container_width=True)
+            if btn_criar_disc:
+                if not sub_name or not sub_name.strip():
+                    st.error("O nome da disciplina é obrigatório!")
+                elif not sub_teacher or not sub_teacher.strip():
+                    st.error("O nome do professor é obrigatório!")
+                elif sub_hours <= 0:
+                    st.error("A carga horária deve ser maior que zero!")
+                else:
+                    try:
+                        nova_disc = create_subject(
+                            name=sub_name.strip(),
+                            teacher=sub_teacher.strip(),
+                            hours=int(sub_hours),
+                            color=sub_color,
+                            token=auth_token,
+                        )
+                        st.success(f"Disciplina '{nova_disc.get('name')}' criada com sucesso!")
+                        st.rerun()
+                    except Exception as err:
+                        st.error(f"Erro ao criar disciplina: {err}")
+
+    # 2. Visão Geral das Disciplinas Matriculadas
     st.markdown("### Disciplinas do Semestre")
     col_d1, col_d2, col_d3 = st.columns(3)
 
@@ -1033,3 +1110,379 @@ elif opcao_menu == "My Courses":
                 if st.button("🗑️ Excluir", key=f"del_{t_id}", use_container_width=True):
                     delete_task(t_id, token=auth_token)
                     st.rerun()
+
+# -----------------------------------------------------------------------------
+# ABA 3: MODO PROVA — PREPARAÇÃO ATIVA PARA AVALIAÇÕES
+# -----------------------------------------------------------------------------
+elif opcao_menu == "Modo Prova":
+    st.markdown("## 🎯 Modo Prova — Preparação Ativa para Avaliações")
+    st.caption("Planejamento com contagem regressiva, simulados adaptativos, mapa de domínio e revisão focada na véspera.")
+
+    todas_provas = get_exams()
+
+    if not todas_provas:
+        st.info("Nenhuma avaliação cadastrada ainda. Configure sua primeira prova abaixo!")
+        ex_ativo = None
+    else:
+        opcoes_provas = {
+            p["id"]: f"🎯 {p['title']} ({p.get('subject_name', 'Matéria')}) — 📅 {p['exam_date']}"
+            for p in todas_provas
+        }
+        col_sel_p, col_info_p = st.columns([3.2, 1.8])
+        with col_sel_p:
+            selected_exam_id = st.selectbox(
+                "Selecione a Avaliação em Preparação:",
+                options=list(opcoes_provas.keys()),
+                format_func=lambda x: opcoes_provas[x],
+                label_visibility="collapsed",
+            )
+        ex_ativo = get_exam_by_id(selected_exam_id) or todas_provas[0]
+
+    st.markdown("")
+
+    # Abas organizadas do Modo Prova
+    tab_plano, tab_simulado, tab_d1, tab_nova_prova = st.tabs([
+        "📅 Plano & Cronograma",
+        "📝 Simulado & Quizzes",
+        "⚡ Revisão D-1",
+        "➕ Configurar Nova Prova",
+    ])
+
+    # -------------------------------------------------------------------------
+    # TAB 1: PLANO DE REVISÃO E CRONOGRAMA COM CONTAGEM REGRESSIVA
+    # -------------------------------------------------------------------------
+    with tab_plano:
+        if ex_ativo:
+            plano = generate_review_plan(ex_ativo["id"])
+            prep_index = calculate_prep_index(ex_ativo["id"])
+            topicos_dominio = get_topic_mastery(ex_ativo["id"])
+
+            dias_restantes = plano["days_remaining"]
+            pontos_fortes = [t for t in topicos_dominio if not t["is_weak"]]
+            pontos_fracos = [t for t in topicos_dominio if t["is_weak"]]
+
+            # 3 Cards de Indicadores do Modo Prova
+            c_kpi1, c_kpi2, c_kpi3 = st.columns(3)
+            with c_kpi1:
+                cor_dias = "#10B981" if dias_restantes > 3 else ("#F6C768" if dias_restantes > 1 else "#EF4444")
+                st.markdown(
+                    f"""
+                    <div class="kpi-card" style="border-left: 4px solid {cor_dias};">
+                        <div style="font-size: 26px; margin-bottom: 4px;">⏳</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #1E293B;">{dias_restantes} dias</div>
+                        <div style="font-size: 13px; color: #64748B;">Contagem Regressiva até a Prova</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with c_kpi2:
+                st.markdown(
+                    f"""
+                    <div class="kpi-card" style="border-left: 4px solid #6C5CE7;">
+                        <div style="font-size: 26px; margin-bottom: 4px;">📈</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #1E293B;">{prep_index}%</div>
+                        <div style="font-size: 13px; color: #64748B;">Índice Geral de Preparo</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with c_kpi3:
+                st.markdown(
+                    f"""
+                    <div class="kpi-card" style="border-left: 4px solid #3B82F6;">
+                        <div style="font-size: 26px; margin-bottom: 4px;">🎯</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #1E293B;">{len(pontos_fortes)}/{len(topicos_dominio)}</div>
+                        <div style="font-size: 13px; color: #64748B;">Tópicos Dominados vs. A Reforçar</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            st.markdown("---")
+
+            # Mapeamento de Domínio por Tópicos (Fortes vs. Fracos)
+            st.markdown("### 🗺️ Mapeamento de Domínio por Tópicos")
+            col_fortes, col_fracos = st.columns(2)
+
+            with col_fortes:
+                st.markdown("#### ✅ Pontos Fortes (Domínio >= 60%)")
+                if pontos_fortes:
+                    for tf in pontos_fortes:
+                        st.markdown(
+                            f"""
+                            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; margin-bottom: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <span style="font-size: 13px; font-weight: 700; color: #1E293B;">{tf['topic']}</span>
+                                    <span style="font-size: 12px; font-weight: 700; color: #10B981;">{tf['mastery']}%</span>
+                                </div>
+                                <div style="background: #F1F5F9; border-radius: 6px; height: 6px; width: 100%; overflow: hidden;">
+                                    <div style="background: #10B981; height: 100%; width: {tf['mastery']}%;"></div>
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                else:
+                    st.info("Nenhum tópico atingiu o limiar de ponto forte ainda. Realize mais simulados!")
+
+            with col_fracos:
+                st.markdown("#### ⚠️ Pontos Críticos / A Reforçar (Domínio < 60%)")
+                if pontos_fracos:
+                    for tfr in pontos_fracos:
+                        st.markdown(
+                            f"""
+                            <div style="background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 12px; padding: 12px; margin-bottom: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <span style="font-size: 13px; font-weight: 700; color: #9A3412;">{tfr['topic']}</span>
+                                    <span style="font-size: 12px; font-weight: 700; color: #EA580C;">{tfr['mastery']}%</span>
+                                </div>
+                                <div style="background: #FED7AA; border-radius: 6px; height: 6px; width: 100%; overflow: hidden;">
+                                    <div style="background: #EA580C; height: 100%; width: {tfr['mastery']}%;"></div>
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                else:
+                    st.success("Parabéns! Todos os tópicos avaliados estão com alto nível de domínio.")
+
+            st.markdown("---")
+
+            # Checklist do Cronograma Diário até a Prova
+            st.markdown("### 📋 Cronograma de Revisão Diário")
+            for item_p in plano["schedule"]:
+                badge_bg = "#EDE9FE" if item_p.get("is_current") else "#F8FAFC"
+                badge_color = "#6C5CE7" if item_p.get("is_current") else "#475569"
+                borda = "2px solid #6C5CE7" if item_p.get("is_current") else "1px solid #E2E8F0"
+
+                with st.container():
+                    st.markdown(
+                        f"""
+                        <div style="background: #FFFFFF; border: {borda}; border-radius: 14px; padding: 16px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="background: {badge_bg}; color: {badge_color}; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">
+                                    {item_p['day']} • {item_p['date']}
+                                </span>
+                                <span style="font-size: 12px; font-weight: 700; color: #64748B;">{item_p['focus']}</span>
+                            </div>
+                            <div style="font-size: 13px; color: #334155; margin-top: 6px;">
+                                🎯 <b>Metas do Dia:</b> {', '.join(item_p['tasks'])}
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+        else:
+            st.warning("Cadastre uma avaliação para gerar o plano de revisão.")
+
+    # -------------------------------------------------------------------------
+    # TAB 2: SIMULADO ADAPTATIVO & QUIZZES INTERATIVOS
+    # -------------------------------------------------------------------------
+    with tab_simulado:
+        if ex_ativo:
+            st.markdown("### 📝 Simulado Interativo & Validação Ativa")
+            st.markdown(
+                """
+                <div style="font-size: 13px; color: #64748B; margin-bottom: 14px;">
+                    Responda às questões para atualizar seu índice de preparo. Cada item indica a <b>origem do conteúdo</b>.
+                    Você pode aprovar, editar o enunciado ou rejeitar qualquer questão gerada pela IA.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            questoes = get_mock_questions(ex_ativo["id"])
+
+            if not questoes:
+                st.info("Nenhuma questão ativa encontrada para esta prova.")
+            else:
+                for idx_q, q in enumerate(questoes):
+                    q_id = q["id"]
+                    with st.container():
+                        st.markdown(
+                            f"""
+                            <div style="background: #FFFFFF; border: 1px solid #ECEFF7; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 11px; font-weight: 700; color: #6C5CE7; background: #F3E8FF; padding: 3px 10px; border-radius: 6px;">
+                                        Questão #{idx_q + 1} • {q.get('topic', 'Geral')}
+                                    </span>
+                                    <span style="font-size: 11px; color: #64748B; background: #F8FAFC; padding: 2px 8px; border-radius: 4px;">
+                                        🔍 {q.get('source_reference', 'Material de Estudo')}
+                                    </span>
+                                </div>
+                                <div style="font-size: 15px; font-weight: 600; color: #1E293B; margin-bottom: 12px;">
+                                    {q['question_text']}
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                        # Opções de resposta
+                        escolha = st.radio(
+                            f"Selecione sua resposta para a Questão #{idx_q + 1}:",
+                            options=list(range(len(q["options"]))),
+                            format_func=lambda i: f"{chr(65+i)}) {q['options'][i]}",
+                            key=f"radio_q_{q_id}",
+                            label_visibility="collapsed",
+                        )
+
+                        c_btn_resp, c_btn_edit, c_btn_rej = st.columns([2, 1, 1])
+
+                        with c_btn_resp:
+                            if st.button("✓ Confirmar Resposta", key=f"btn_resp_{q_id}", use_container_width=True):
+                                is_correta = (escolha == q.get("correct_option", 0))
+                                res = record_quiz_answer(
+                                    exam_id=ex_ativo["id"],
+                                    question_id=q_id,
+                                    selected_option=escolha,
+                                    is_correct=is_correta,
+                                )
+                                if is_correta:
+                                    st.success(f"🎉 Resposta Correta! {q.get('explanation', '')}")
+                                else:
+                                    gabarito_letra = chr(65 + q.get("correct_option", 0))
+                                    st.error(f"❌ Incorreto. A alternativa correta é {gabarito_letra}. {q.get('explanation', '')}")
+                                st.info(f"Domínio atualizado do tópico '{res['topic']}': **{res['topic_mastery']}%** • Novo Índice de Preparo: **{res['prep_index']}%**")
+
+                        with c_btn_edit:
+                            with st.popover("✏️ Editar", use_container_width=True):
+                                novo_texto = st.text_area("Editar Enunciado:", value=q["question_text"], key=f"edit_txt_{q_id}")
+                                if st.button("Salvar Edição", key=f"save_edit_{q_id}"):
+                                    update_question_status(q_id, "edited", novo_texto)
+                                    st.success("Enunciado atualizado com sucesso!")
+                                    st.rerun()
+
+                        with c_btn_rej:
+                            if st.button("❌ Rejeitar", key=f"btn_rej_{q_id}", use_container_width=True):
+                                update_question_status(q_id, "rejected")
+                                st.warning("Questão descartada do simulado.")
+                                st.rerun()
+
+                        st.markdown("<br>", unsafe_allow_html=True)
+        else:
+            st.warning("Cadastre uma avaliação para gerar o simulado.")
+
+    # -------------------------------------------------------------------------
+    # TAB 3: REVISÃO FINAL CONDENSADA D-1 (VÉSPERA DA PROVA)
+    # -------------------------------------------------------------------------
+    with tab_d1:
+        if ex_ativo:
+            revisao_d1 = get_d1_emergency_review(ex_ativo["id"])
+
+            st.markdown(
+                """
+                <div style="background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border: 1px solid #FDBA74; border-radius: 14px; padding: 18px; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                        <span style="font-size: 24px;">⚡</span>
+                        <span style="font-size: 18px; font-weight: 800; color: #9A3412;">Revisão Final D-1: Foco Total nas Suas Vulnerabilidades</span>
+                    </div>
+                    <div style="font-size: 13px; color: #7C2D12;">
+                        Faltam poucas horas para a prova. Esta síntese elimina o excesso de conteúdo e foca <b>apenas</b> nos tópicos
+                        onde seu histórico indicou menor domínio.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            st.markdown("#### 🎯 Tópicos de Maior Risco Identificados:")
+            for card in revisao_d1["cards"]:
+                st.markdown(
+                    f"""
+                    <div style="background: #FFFFFF; border-left: 5px solid #EA580C; border: 1px solid #FED7AA; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 15px; font-weight: 700; color: #1E293B;">{card['topic']}</span>
+                            <span style="font-size: 12px; font-weight: 700; color: #EA580C; background: #FFEDD5; padding: 2px 8px; border-radius: 6px;">
+                                Domínio: {card['mastery']}%
+                            </span>
+                        </div>
+                        <div style="font-size: 13px; color: #475569; margin-bottom: 6px;">
+                            📌 <b>Conceito Crítico:</b> {card['key_concept']}
+                        </div>
+                        <div style="font-size: 12px; color: #0284C7; font-weight: 600;">
+                            💡 <b>Ação Recomendada:</b> {card['recommended_action']}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            st.info(f"📢 **Recomendação Final do EduTrack AI:** {revisao_d1['recommendation']}")
+        else:
+            st.warning("Cadastre uma avaliação para gerar a revisão D-1.")
+
+    # -------------------------------------------------------------------------
+    # TAB 4: CONFIGURAÇÃO DE NOVA PROVA
+    # -------------------------------------------------------------------------
+    with tab_nova_prova:
+        st.markdown("### 🎯 Cadastrar Nova Avaliação para Preparação")
+        st.markdown(
+            """
+            <div style="font-size: 13px; color: #64748B; margin-bottom: 14px;">
+                Informe a matéria, a data e o conteúdo programático ou materiais de estudo.
+                O EduTrack AI gerará automaticamente o simulado adaptativo e o cronograma de estudos diário.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        with st.form("form_nova_avaliacao", clear_on_submit=True):
+            col_p_tit, col_p_disc = st.columns([2, 1])
+            with col_p_tit:
+                ex_title = st.text_input("Título da Avaliação *", placeholder="Ex: Prova Bimestral de Algoritmos, Exame Final...")
+            with col_p_disc:
+                nomes_disc_map = {d["id"]: d["name"] for d in todas_disciplinas}
+                selected_sub_exam_id = st.selectbox(
+                    "Disciplina Curricular *",
+                    options=list(nomes_disc_map.keys()),
+                    format_func=lambda x: nomes_disc_map[x],
+                )
+
+            col_p_data, col_p_tipo = st.columns(2)
+            with col_p_data:
+                ex_date = st.date_input(
+                    "Data da Avaliação *",
+                    value=datetime.date.today() + datetime.timedelta(days=7),
+                    min_value=datetime.date.today(),
+                )
+            with col_p_tipo:
+                ex_type = st.selectbox(
+                    "Formato da Avaliação *",
+                    options=[
+                        "Mista (Múltipla Escolha e Prática)",
+                        "Múltipla Escolha",
+                        "Discursiva / Teórica",
+                        "Prática em Laboratório",
+                    ],
+                )
+
+            ex_content = st.text_area(
+                "Conteúdo Programático / Materiais de Estudo (mínimo 15 caracteres) *",
+                placeholder="Insira os tópicos da ementa, capítulos do livro, notas de aula ou assuntos que cairão na prova...",
+                height=120,
+            )
+
+            btn_gerar_plano = st.form_submit_button("🚀 Gerar Plano de Preparação e Simulado", use_container_width=True)
+
+            if btn_gerar_plano:
+                if not ex_title or not ex_title.strip():
+                    st.error("O título da avaliação é obrigatório!")
+                elif not ex_content or len(ex_content.strip()) < 15:
+                    st.error("Informe pelo menos 15 caracteres com os tópicos de estudo da prova!")
+                else:
+                    try:
+                        sub_nome_escolhido = nomes_disc_map.get(selected_sub_exam_id, "Disciplina")
+                        nova_avaliacao = create_exam(
+                            subject_id=selected_sub_exam_id,
+                            subject_name=sub_nome_escolhido,
+                            title=ex_title.strip(),
+                            exam_date=ex_date.isoformat(),
+                            exam_type=ex_type,
+                            content=ex_content.strip(),
+                            token=auth_token,
+                        )
+                        st.success(f"Avaliação '{nova_avaliacao['title']}' cadastrada com sucesso! Plano de estudos e simulado gerados.")
+                        st.rerun()
+                    except Exception as ex_err:
+                        st.error(f"Erro ao cadastrar avaliação: {ex_err}")

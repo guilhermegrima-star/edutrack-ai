@@ -27,8 +27,15 @@ class TestTasksService(unittest.TestCase):
     def setUp(self):
         # Reset local memory store and session_state before each test
         tasks_service._LOCAL_MEMORY_STORE.clear()
-        if hasattr(tasks_service.st, "session_state") and isinstance(tasks_service.st.session_state, dict):
-            tasks_service.st.session_state.clear()
+        try:
+            if hasattr(tasks_service.st, "session_state"):
+                if isinstance(tasks_service.st.session_state, dict):
+                    tasks_service.st.session_state.clear()
+                else:
+                    for k in list(tasks_service.st.session_state.keys()):
+                        del tasks_service.st.session_state[k]
+        except Exception:
+            pass
         tasks_service.init_tasks_store()
 
     def test_create_subject_validates_required_fields(self):
@@ -112,6 +119,20 @@ class TestTasksService(unittest.TestCase):
         # Verify store has the new subject
         subjects = tasks_service.get_subjects()
         self.assertTrue(any(s.get("name") == "Redes de Computadores" for s in subjects))
+
+    def test_create_subject_with_custom_color(self):
+        sub = tasks_service.create_subject(
+            name="Sistemas Distribuídos",
+            teacher="Prof. Carlos",
+            hours=80,
+            color="#EC4899",
+        )
+        self.assertEqual(sub["name"], "Sistemas Distribuídos")
+        self.assertEqual(sub["color"], "#EC4899")
+        subjects = tasks_service.get_subjects()
+        matched = next((s for s in subjects if s.get("name") == "Sistemas Distribuídos"), None)
+        self.assertIsNotNone(matched)
+        self.assertEqual(matched.get("color"), "#EC4899")
 
     def test_create_task_validates_required_fields(self):
         with self.assertRaises(ValueError):
