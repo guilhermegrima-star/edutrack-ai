@@ -441,10 +441,10 @@ def build_pdf_report(data: dict[str, Any], output_path: str | Path) -> Path:
 
     # 2. Dados do Aluno (Bloco informativo)
     user = data.get("user", {})
-    user_name = user.get("name") or user.get("email") or f"Aluno #{user.get('id', 'N/A')}"
+    user_name = user.get("name") or user.get("email") or f"Aluno #{user.get('id', 'N/D')}"
     user_email = user.get("email", "Não informado")
-    user_id = str(user.get("id", "N/A"))
-    issued_at = data.get("issued_at", "N/A")
+    user_id = str(user.get("id", "N/D"))
+    issued_at = data.get("issued_at", "N/D")
 
     aluno_info_data = [
         [
@@ -604,7 +604,7 @@ def build_pdf_report(data: dict[str, Any], output_path: str | Path) -> Path:
         story.append(Spacer(1, 16))
 
     # 6. Caixa de Autenticidade e Verificação
-    checksum_val = data.get("checksum", "N/A")
+    checksum_val = data.get("checksum", "N/D")
     autenticidade_data = [
         [
             Paragraph(
@@ -760,4 +760,3 @@ if __name__ == "__main__":
             file=sys.stderr,
         )
         sys.exit(1)
-

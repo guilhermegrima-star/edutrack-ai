@@ -4,7 +4,7 @@ utils/theme.py
 Módulo de identidade visual e componentes de UI do EduTrack AI.
 Inspirado nas diretrizes de design:
 - assets/login.png (Landing Page minimalista estilo Notion)
-- assets/home principal.png (Dashboard Smart Education em tons de índigo/roxo)
+- assets/home principal.png (painel de educação inteligente em tons de índigo/roxo)
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ header[data-testid="stHeader"] {
     background-color: transparent !important;
 }
 
-/* Sidebar Estilo Smart Education */
+/* Barra lateral com estilo de educação inteligente */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #38337A 0%, #302B6D 100%) !important;
     border-right: none !important;
@@ -78,7 +78,7 @@ header[data-testid="stHeader"] {
     box-shadow: 0 4px 14px rgba(78, 68, 180, 0.4);
 }
 
-/* Card Upgrade To Pro na Sidebar */
+/* Card do plano Pro na barra lateral */
 .pro-card-sidebar {
     background: linear-gradient(135deg, #4E44B4 0%, #3B3486 100%);
     border-radius: 18px;
@@ -560,7 +560,7 @@ def apply_login_landing_theme():
 
 
 def render_sidebar_header():
-    """Renderiza a marca e o logotipo Smart Education / EduTrack AI no topo da Sidebar."""
+    """Renderiza a marca e o logotipo EduTrack AI no topo da barra lateral."""
     st.sidebar.markdown(
         """
         <div style="display: flex; align-items: center; gap: 12px; padding: 12px 4px 20px 4px;">
@@ -579,7 +579,7 @@ def render_sidebar_header():
             </div>
             <div>
                 <div style="font-size: 19px; font-weight: 800; color: #FFFFFF; line-height: 1.1; letter-spacing: -0.02em;">
-                    smart education
+                    educação inteligente
                 </div>
                 <div style="font-size: 11px; font-weight: 600; color: #C7D2FE; letter-spacing: 0.05em; text-transform: uppercase;">
                     EduTrack AI
@@ -592,12 +592,12 @@ def render_sidebar_header():
 
 
 def render_sidebar_pro_card():
-    """Renderiza o card 'Upgrade To Pro' no rodapé da Sidebar como visto em assets/home principal.png."""
+    """Renderiza o card de plano Pro no rodapé da Sidebar como visto em assets/home principal.png."""
     st.sidebar.markdown(
         """
         <div class="pro-card-sidebar">
-            <div class="pro-card-badge">PRO EDITION</div>
-            <h4>Upgrade To Pro 🚀</h4>
+            <div class="pro-card-badge">EDIÇÃO PRO</div>
+            <h4>Assine o Plano Pro 🚀</h4>
             <p>Tenha tutoria de IA ilimitada, análises avançadas de desempenho e relatórios em PDF personalizados.</p>
             <div style="
                 background: rgba(255, 255, 255, 0.95);
@@ -609,7 +609,7 @@ def render_sidebar_pro_card():
                 border-radius: 10px;
                 cursor: pointer;
             ">
-                Upgrade Today!
+                Conheça o Plano Pro!
             </div>
         </div>
         """,
@@ -624,7 +624,7 @@ def render_welcome_banner(user_name: str = "Aluno(a)", days_streak: int = 4):
         f"""
         <div class="welcome-banner">
             <div>
-                <h2>Welcome back, {clean_name}! 🎓</h2>
+                <h2>Olá novamente, {clean_name}! 🎓</h2>
                 <p>
                     Esta semana você manteve <b>{days_streak} dias consecutivos de estudos</b>! 
                     Continue no ritmo para alcançar suas metas acadêmicas e evoluir nas disciplinas.
@@ -651,7 +651,7 @@ def render_kpi_cards(certificados: int = 18, em_andamento: int = 5, concluidos: 
                     📜
                 </div>
                 <div>
-                    <div class="kpi-label">Certificates Earned</div>
+                    <div class="kpi-label">Certificados Conquistados</div>
                     <div class="kpi-val" style="color: #38337A;">{certificados}</div>
                 </div>
             </div>
@@ -667,7 +667,7 @@ def render_kpi_cards(certificados: int = 18, em_andamento: int = 5, concluidos: 
                     📖
                 </div>
                 <div>
-                    <div class="kpi-label">On Going Courses</div>
+                    <div class="kpi-label">Disciplinas em Andamento</div>
                     <div class="kpi-val" style="color: #2563EB;">{em_andamento}</div>
                 </div>
             </div>
@@ -683,7 +683,7 @@ def render_kpi_cards(certificados: int = 18, em_andamento: int = 5, concluidos: 
                     🎓
                 </div>
                 <div>
-                    <div class="kpi-label">Completed Courses</div>
+                    <div class="kpi-label">Disciplinas Concluídas</div>
                     <div class="kpi-val" style="color: #16A34A;">{concluidos}</div>
                 </div>
             </div>

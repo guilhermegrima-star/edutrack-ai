@@ -7,20 +7,15 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-# Ensure requests and streamlit can be imported/mocked for testing
-if "requests" not in sys.modules:
-    mock_req_module = MagicMock()
-    sys.modules["requests"] = mock_req_module
-else:
-    mock_req_module = sys.modules["requests"]
-
-if "streamlit" not in sys.modules:
-    mock_st_module = MagicMock()
-    mock_st_module.session_state = {}
-    sys.modules["streamlit"] = mock_st_module
+# Ensure requests is mocked for testing
+mock_req_module = MagicMock()
 
 import utils.tasks_service as tasks_service
 tasks_service.requests = mock_req_module
+tasks_service.st = None
+
+
+
 
 
 class TestTasksService(unittest.TestCase):
