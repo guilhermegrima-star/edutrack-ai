@@ -23,7 +23,6 @@ def test_get_setting_prefers_streamlit_secrets():
         }
     )
     old_env_file = config._get_from_env_file
-    old_environ = config.os.environ.copy()
     original_import = __import__
 
     def fake_import(name, *args, **kwargs):
@@ -31,19 +30,21 @@ def test_get_setting_prefers_streamlit_secrets():
             return fake_streamlit
         return original_import(name, *args, **kwargs)
 
+    import unittest.mock as mock
+
     try:
         config._get_from_env_file = lambda _key: "env-fallback"
-        config.os.environ = {"XANO_AUTH_BASE_URL": "https://env.example/api:auth"}
         import builtins
         builtins.__import__ = fake_import
 
-        assert config.get_setting("XANO_AUTH_BASE_URL") == "https://secrets.example/api:auth"
-        assert config.get_setting("EDUTRACK_TASKS_PATH") == "task"
+        with mock.patch.dict(config.os.environ, {"XANO_AUTH_BASE_URL": "https://env.example/api:auth"}, clear=False):
+            assert config.get_setting("XANO_AUTH_BASE_URL") == "https://secrets.example/api:auth"
+            assert config.get_setting("EDUTRACK_TASKS_PATH") == "task"
     finally:
         config._get_from_env_file = old_env_file
-        config.os.environ = old_environ
         import builtins
         builtins.__import__ = original_import
+
 
 
 if __name__ == "__main__":

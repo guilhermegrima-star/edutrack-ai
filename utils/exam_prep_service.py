@@ -11,6 +11,8 @@ from __future__ import annotations
 import datetime
 from typing import Any
 
+import utils.gemini_service as gemini_service
+
 try:
     import streamlit as st
 except ImportError:
@@ -22,6 +24,7 @@ _LOCAL_EXAM_STORE: dict[str, list[dict[str, Any]]] = {
     "mock_questions": [],
     "topic_mastery": [],
     "study_sessions": [],
+    "exam_summaries": [],
 }
 
 # Tópicos e questões padrão de exemplo
@@ -106,7 +109,7 @@ def init_exam_prep_store() -> None:
         sample_exam = {
             "id": 1,
             "subject_id": 1,
-            "subject_name": "UI UX Fundamentals",
+            "subject_name": "Fundamentos de UI/UX",
             "title": "Prova Bimestral de Avaliação de Interfaces",
             "exam_date": (datetime.date.today() + datetime.timedelta(days=5)).isoformat(),
             "exam_type": "Mista (Múltipla Escolha e Prática)",
@@ -198,10 +201,116 @@ def create_exam(
 
     # Gera tópicos derivados a partir do conteúdo informado
     _generate_initial_topics_for_exam(new_id, clean_content)
-    # Gera questões de simulado baseadas nos tópicos
-    _generate_initial_questions_for_exam(new_id, clean_content, clean_sub_id)
+
+    # Tenta gerar questões com a IA do Gemini; fallback para o gerador heurístico local
+    ai_generated_questions = False
+    if gemini_service.is_gemini_available():
+        try:
+            ai_qs = gemini_service.generate_ai_mock_questions(
+                subject_name=new_exam["subject_name"],
+                exam_title=clean_title,
+                content=clean_content,
+                num_questions=3,
+            )
+            if ai_qs:
+                q_store = _get_store("mock_questions_store")
+                max_id = max([int(q.get("id", 0)) for q in q_store]) if q_store else 0
+                for idx, q_item in enumerate(ai_qs):
+                    q_item["id"] = max_id + 1 + idx
+                    q_item["exam_id"] = new_id
+                    q_store.append(q_item)
+                _set_store("mock_questions_store", q_store)
+                ai_generated_questions = True
+        except Exception:
+            ai_generated_questions = False
+
+    if not ai_generated_questions:
+        _generate_initial_questions_for_exam(new_id, clean_content, clean_sub_id)
+
+    # Pré-carrega resumo e flashcards no store se possível
+    try:
+        get_exam_ai_summary_and_flashcards(new_id)
+    except Exception:
+        pass
 
     return new_exam
+
+
+def generate_additional_questions_with_ai(exam_id: int, num_questions: int = 3) -> list[dict[str, Any]]:
+    """Gera novas questões contextualizadas para o simulado utilizando a IA do Gemini."""
+    exam = get_exam_by_id(exam_id)
+    if not exam:
+        raise ValueError("Avaliação não encontrada.")
+
+    ai_qs = gemini_service.generate_ai_mock_questions(
+        subject_name=exam.get("subject_name", "Geral"),
+        exam_title=exam.get("title", "Avaliação"),
+        content=exam.get("content", ""),
+        num_questions=num_questions,
+    )
+
+    q_store = _get_store("mock_questions_store")
+    max_id = max([int(q.get("id", 0)) for q in q_store]) if q_store else 0
+
+    added = []
+    for idx, q_item in enumerate(ai_qs):
+        q_item["id"] = max_id + 1 + idx
+        q_item["exam_id"] = int(exam_id)
+        q_store.append(q_item)
+        added.append(q_item)
+
+    _set_store("mock_questions_store", q_store)
+    return added
+
+
+def get_exam_ai_summary_and_flashcards(exam_id: int, force_regenerate: bool = False) -> dict[str, Any]:
+    """Retorna o resumo conceitual e flashcards gerados por IA para a avaliação."""
+    exam = get_exam_by_id(exam_id)
+    if not exam:
+        return {"summary": "", "key_points": [], "flashcards": []}
+
+    summaries = _get_store("exam_summaries_store")
+    cached = next((s for s in summaries if int(s.get("exam_id", 0)) == int(exam_id)), None)
+
+    if cached and not force_regenerate:
+        return cached
+
+    # Tenta gerar com Gemini
+    result = None
+    if gemini_service.is_gemini_available():
+        try:
+            result = gemini_service.generate_ai_summary_and_flashcards(
+                exam_title=exam.get("title", ""),
+                content=exam.get("content", ""),
+            )
+        except Exception:
+            result = None
+
+    # Fallback heurístico local caso a IA não esteja disponível ou ocorra erro
+    if not result:
+        topics = get_topic_mastery(exam_id)
+        top_names = [t["topic"] for t in topics] or ["Conceitos Fundamentais"]
+        result = {
+            "summary": f"Resumo conceitual da avaliação '{exam['title']}': foco principal nos tópicos {', '.join(top_names[:3])}. Pratique com os simulados interativos para reforçar a memorização ativa.",
+            "key_points": [f"Revisar detalhadamente: {tn}" for tn in top_names[:4]],
+            "flashcards": [
+                {
+                    "topic": tn,
+                    "front": f"Qual o conceito fundamental de {tn}?",
+                    "back": f"Compreender a definição e aplicação prática de {tn} no contexto da avaliação.",
+                }
+                for tn in top_names[:4]
+            ],
+        }
+
+    result["exam_id"] = int(exam_id)
+    if cached:
+        cached.update(result)
+    else:
+        summaries.append(result)
+        _set_store("exam_summaries_store", summaries)
+
+    return result
 
 
 def _generate_initial_topics_for_exam(exam_id: int, content: str) -> None:
@@ -252,9 +361,10 @@ def _generate_initial_questions_for_exam(exam_id: int, content: str, subject_id:
     _set_store("mock_questions_store", q_store)
 
 
-def generate_review_plan(exam_id: int) -> dict[str, Any]:
+def generate_review_plan(exam_id: int, use_ai: bool = True) -> dict[str, Any]:
     """
     Gera o plano diário de revisão com contagem regressiva e metas até o dia da prova.
+    Utiliza IA Gemini para personalizar a distribuição se a API estiver disponível.
     """
     exam = get_exam_by_id(exam_id)
     if not exam:
@@ -266,6 +376,40 @@ def generate_review_plan(exam_id: int) -> dict[str, Any]:
 
     topics = get_topic_mastery(exam_id)
     pontos_fracos = [t for t in topics if t.get("mastery", 0) < 60]
+
+    # Tentativa de gerar o cronograma adaptativo via Gemini se houver antecedência
+    if use_ai and gemini_service.is_gemini_available() and days_remaining > 1:
+        try:
+            top_names = [t["topic"] for t in topics]
+            weak_names = [t["topic"] for t in pontos_fracos]
+            ai_sched_raw = gemini_service.generate_ai_study_plan(
+                exam_title=exam["title"],
+                days_remaining=days_remaining,
+                content=exam.get("content", ""),
+                topics=top_names,
+                weak_topics=weak_names,
+            )
+            if ai_sched_raw:
+                ai_schedule = []
+                for idx, s_item in enumerate(ai_sched_raw):
+                    target_dt = today + datetime.timedelta(days=idx)
+                    ai_schedule.append({
+                        "day": s_item.get("day", f"Dia {idx+1}"),
+                        "date": target_dt.isoformat(),
+                        "focus": s_item.get("focus", "Estudo Ativo"),
+                        "topics": s_item.get("topics", []),
+                        "tasks": s_item.get("tasks", ["Resolver simulado do dia"]),
+                        "study_technique": s_item.get("study_technique", "Active Recall"),
+                        "is_current": (idx == 0),
+                    })
+                return {
+                    "days_remaining": max(days_remaining, 0),
+                    "is_emergency_d1": False,
+                    "schedule": ai_schedule,
+                    "ai_generated": True,
+                }
+        except Exception:
+            pass
 
     schedule = []
     if days_remaining <= 1:
@@ -309,6 +453,7 @@ def generate_review_plan(exam_id: int) -> dict[str, Any]:
         "days_remaining": max(days_remaining, 0),
         "is_emergency_d1": days_remaining <= 1,
         "schedule": schedule,
+        "ai_generated": False,
     }
 
 
@@ -427,16 +572,41 @@ def calculate_prep_index(exam_id: int) -> float:
     return final_index
 
 
-def get_d1_emergency_review(exam_id: int) -> dict[str, Any]:
+def get_d1_emergency_review(exam_id: int, use_ai: bool = True) -> dict[str, Any]:
     """
     Entrega a síntese condensada da Revisão Final D-1 concentrada
     exclusivamente nos tópicos com maior deficiência do estudante.
+    Se a IA Gemini estiver disponível, gera карточки personalizados.
     """
     topics = get_topic_mastery(exam_id)
     pontos_criticos = [t for t in topics if t["is_weak"]]
 
     if not pontos_criticos:
         pontos_criticos = topics[:2] if topics else []
+
+    # Tentativa de gerar síntese cirúrgica via IA
+    if use_ai and gemini_service.is_gemini_available() and pontos_criticos:
+        try:
+            exam = get_exam_by_id(exam_id)
+            if exam:
+                ai_d1 = gemini_service.generate_ai_d1_review(
+                    exam_title=exam.get("title", ""),
+                    weak_topics=pontos_criticos,
+                    content=exam.get("content", ""),
+                )
+                if ai_d1 and ai_d1.get("cards"):
+                    return {
+                        "exam_id": exam_id,
+                        "critical_topics_count": len(pontos_criticos),
+                        "cards": ai_d1["cards"],
+                        "recommendation": ai_d1.get(
+                            "recommendation",
+                            "Foque exclusivamente nas suas vulnerabilidades nas próximas 24 horas e descanse a mente.",
+                        ),
+                        "ai_generated": True,
+                    }
+        except Exception:
+            pass
 
     cards_resumo = []
     for c in pontos_criticos:
@@ -453,4 +623,5 @@ def get_d1_emergency_review(exam_id: int) -> dict[str, Any]:
         "critical_topics_count": len(pontos_criticos),
         "cards": cards_resumo,
         "recommendation": "Foque apenas nestes pontos críticos nas próximas 24 horas. Evite tentar aprender conteúdos novos e descanse na noite anterior.",
+        "ai_generated": False,
     }

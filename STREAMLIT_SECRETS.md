@@ -23,6 +23,9 @@ XANO_AUTH_BASE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:6Tn0YgRn"
 EDUTRACK_BASE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:gTfD518O"
 EDUTRACK_TASKS_PATH = "task"
 # EDUTRACK_TOKEN = "seu_jwt_token_aqui"
+
+# Google Gemini API
+GEMINI_API_KEY = "sua_chave_gemini_aqui"
 ```
 
 ## Regras de uso

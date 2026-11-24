@@ -178,3 +178,20 @@ def get_auth_token() -> str:
     """Retorna o token JWT pré-configurado, se houver."""
     return get_setting("EDUTRACK_TOKEN", default="").strip()
 
+
+def get_gemini_api_key() -> str:
+    """
+    Retorna a chave da API do Google Gemini se configurada.
+    Ordem de resolução:
+    1. st.secrets["GEMINI_API_KEY"] (ou subseção gemini.api_key)
+    2. .streamlit/secrets.toml
+    3. os.environ["GEMINI_API_KEY"]
+    4. .env
+    Retorna string vazia caso não configurada.
+    """
+    key = get_setting("GEMINI_API_KEY", default="").strip()
+    if not key:
+        key = get_setting("GOOGLE_API_KEY", default="").strip()
+    return key
+
+

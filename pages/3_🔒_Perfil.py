@@ -53,7 +53,7 @@ if hasattr(st, "page_link"):
 render_sidebar_pro_card()
 
 st.sidebar.markdown("---")
-if st.sidebar.button("🚪 Encerrar Sessão (Logout)", use_container_width=True):
+if st.sidebar.button("🚪 Encerrar Sessão", use_container_width=True):
     perform_logout()
 
 # -----------------------------------------------------------------------------
@@ -88,7 +88,8 @@ def formatar_data(timestamp_val) -> str:
 # -----------------------------------------------------------------------------
 user_name = user.get("name", "Aluno(a)") if user else "Aluno(a)"
 user_email = user.get("email", "aluno@edutrack.ai") if user else "aluno@edutrack.ai"
-user_role = (user.get("role") or "member").capitalize() if user else "Estudante"
+role_api = (user.get("role") or "member").strip().lower() if user else "student"
+user_role = {"member": "Estudante", "student": "Estudante", "teacher": "Professor", "admin": "Administrador"}.get(role_api, "Estudante")
 user_id = user.get("id", "N/D") if user else "N/D"
 account_id = user.get("account_id", 0) if user else 0
 membro_desde = formatar_data(user.get("created_at")) if user else "N/D"

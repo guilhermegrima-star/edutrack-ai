@@ -17,7 +17,15 @@ class TestExamPrepService(unittest.TestCase):
         exam_service._LOCAL_EXAM_STORE["mock_questions"].clear()
         exam_service._LOCAL_EXAM_STORE["topic_mastery"].clear()
         exam_service._LOCAL_EXAM_STORE["study_sessions"].clear()
+        exam_service._LOCAL_EXAM_STORE["exam_summaries"].clear()
+        self._orig_avail = exam_service.gemini_service.is_gemini_available
+        exam_service.gemini_service.is_gemini_available = lambda: False
         exam_service.init_exam_prep_store()
+
+    def tearDown(self):
+        exam_service.gemini_service.is_gemini_available = self._orig_avail
+
+
 
     def test_create_exam_validations(self):
         today_future = (datetime.date.today() + datetime.timedelta(days=7)).isoformat()

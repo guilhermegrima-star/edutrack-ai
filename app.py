@@ -3,8 +3,8 @@ app.py
 ------
 Página Principal e Ponto de Entrada do EduTrack AI.
 - Modo Deslogado: Landing Page & Central Exclusiva de Login (inspirada em /assets/login.png)
-- Modo Autenticado: Dashboard Smart Education (inspirado em /assets/home principal.png)
-  - Menu simplificado: Dashboard e My Courses (com gestão completa de obrigações acadêmicas)
+- Modo Autenticado: painel de educação inteligente (inspirado em /assets/home principal.png)
+  - Menu simplificado: Painel e Minhas matérias (com gestão completa das obrigações acadêmicas)
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ import os
 import io
 import datetime
 import hashlib
+import html
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -21,7 +22,7 @@ import altair as alt
 # Configuração da Aplicação Streamlit
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="EduTrack AI - Smart Education",
+    page_title="EduTrack AI - Educação Inteligente",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -69,7 +70,11 @@ from utils.exam_prep_service import (
     calculate_prep_index,
     get_topic_mastery,
     get_d1_emergency_review,
+    generate_additional_questions_with_ai,
+    get_exam_ai_summary_and_flashcards,
 )
+import utils.gemini_service as gemini_service
+
 
 # -----------------------------------------------------------------------------
 # Dados de Exemplo para Gestão Acadêmica da Turma
@@ -108,8 +113,8 @@ if not is_authenticated():
                 <span class="hero-pill-dot"></span>
                 <span>✦ Inteligência Acadêmica Desenvolvida para Estudantes</span>
             </div>
-            <h1 class="hero-title">
-                Aprenda mais. Organize melhor. <span class="hero-title-highlight">Vá além.</span>
+            <h1 class="hero-title"; style="color: #9D00FF"; >
+                Aprenda mais. Organize melhor. <span class="hero-title-highlight"; style="color: #9D00FF";>Vá além.</span>
             </h1>
             <p class="hero-subtitle">
                 Reúna seus conteúdos, planeje suas atividades e tenha tudo o que precisa para evoluir nos estudos.
@@ -160,10 +165,10 @@ if not is_authenticated():
                             if ok_me and isinstance(user_info, dict):
                                 st.session_state["user_data"] = user_info
                             
-                            st.success("Autenticado com sucesso! Carregando painel...")
+                            st.success("Autenticado com sucesso!")
                             st.rerun()
                         else:
-                            st.error(f"Erro no login: {resposta}")
+                            st.error("Erro no login: E-mail ou senha incorretos.")
 
         # ---------------------------------------------------------------------
         # ABA 2: CADASTRO EXCLUSIVO
@@ -213,27 +218,27 @@ if not is_authenticated():
                 <span class="mockup-dot dot-yellow"></span>
                 <span class="mockup-dot dot-green"></span>
                 <span style="font-size: 12px; font-weight: 600; color: #64748B; margin-left: 8px;">
-                    EduTrack AI — Smart Education Dashboard Preview
+                    EduTrack AI — Painel de Ensino Inteligente
                 </span>
             </div>
             <div class="mockup-body">
                 <div style="background: linear-gradient(135deg, #F5EDFF 0%, #EDE5FC 100%); border-radius: 14px; padding: 20px; margin-bottom: 16px; border: 1px solid #E4D7F7;">
-                    <div style="font-weight: 800; color: #38337A; font-size: 18px;">Welcome back, Poojitha! 🎓</div>
+                    <div style="font-weight: 800; color: #38337A; font-size: 18px;">Boa Tarde, Murilo! 🎓</div>
                     <div style="font-size: 13px; color: #5A539B; margin-top: 4px;">
-                        This week you have been studying for 4 consecutive days! Keep it up and improve!
+                        Essa semana você se dedicou por 4 dias consecutivos! Continue assim!
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
                     <div style="background: #FFFFFF; padding: 14px; border-radius: 12px; border: 1px solid #ECEFF7;">
-                        <div style="font-size: 11px; color: #64748B; font-weight: 600;">Certificates Earned</div>
+                        <div style="font-size: 11px; color: #64748B; font-weight: 600;">Tarefas concluídas</div>
                         <div style="font-size: 24px; font-weight: 800; color: #38337A;">18</div>
                     </div>
                     <div style="background: #FFFFFF; padding: 14px; border-radius: 12px; border: 1px solid #ECEFF7;">
-                        <div style="font-size: 11px; color: #64748B; font-weight: 600;">On Going Courses</div>
+                        <div style="font-size: 11px; color: #64748B; font-weight: 600;">Matérias Em Andamento</div>
                         <div style="font-size: 24px; font-weight: 800; color: #2563EB;">5</div>
                     </div>
                     <div style="background: #FFFFFF; padding: 14px; border-radius: 12px; border: 1px solid #ECEFF7;">
-                        <div style="font-size: 11px; color: #64748B; font-weight: 600;">Completed Courses</div>
+                        <div style="font-size: 11px; color: #64748B; font-weight: 600;">Matérias concluídas</div>
                         <div style="font-size: 24px; font-weight: 800; color: #16A34A;">21</div>
                     </div>
                 </div>
@@ -291,7 +296,7 @@ if not is_authenticated():
     st.markdown(
         """
         <div style="text-align: center; font-size: 12px; color: #94A3B8; padding-bottom: 30px;">
-            EduTrack AI © 2026 • Inspirado no design Notion & Smart Education Dashboard
+            EduTrack AI © 2026 • Alunos: Guilherme Grima, Kauã Pereira, Kaleb Luiz, Matheus Campos, Murilo Okubo 
         </div>
         """,
         unsafe_allow_html=True,
@@ -321,12 +326,12 @@ tarefas_pendentes_total = sum(1 for t in todas_tarefas if str(t.get("status", ""
 render_sidebar_header()
 
 # Menu de navegação simplificado conforme solicitado pelo usuário:
-# Mantém apenas "Dashboard" e "My Courses"
+# Mantém o painel principal e a gestão das matérias
 opcao_menu = st.sidebar.radio(
     "Navegação:",
     [
         "Dashboard",
-        "My Courses",
+        "Minhas Matérias",
         "Modo Prova",
     ],
     index=0,
@@ -373,7 +378,7 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-if st.sidebar.button("🚪 Sair da Conta (Logout)", use_container_width=True):
+if st.sidebar.button("🚪 Sair da Conta", use_container_width=True):
     perform_logout()
 
 
@@ -384,7 +389,7 @@ col_busca, col_status = st.columns([4, 1])
 with col_busca:
     termo_busca = st.text_input(
         "Pesquisar",
-        placeholder="🔍 Try to find...",
+        placeholder="🔍 Procurar",
         label_visibility="collapsed",
     )
 with col_status:
@@ -413,25 +418,25 @@ if opcao_menu == "Dashboard":
 
         st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
 
-        # 3. Card "Hours Activity" (Gráfico de Barras Duplas Amarelo/Roxo + Métricas Laterais)
+        # 3. Card de atividade semanal (gráfico de barras duplo amarelo/roxo + métricas laterais)
         st.markdown(
             """
             <div class="activity-card">
                 <div class="activity-header">
                     <div>
-                        <h3 class="activity-title">Hours Activity</h3>
+                        <h3 class="activity-title">Horas de Estudos</h3>
                         <div style="margin-top: 6px; display: flex; align-items: center; gap: 14px;">
-                            <span class="badge-pill-success">✓ +2 More than last week</span>
+                            <span class="badge-pill-success">✓ 2 horas a mais que na semana passada</span>
                             <span style="font-size: 12px; color: #64748B; display: inline-flex; align-items: center; gap: 4px;">
-                                <span style="color: #F6C768; font-size: 14px;">●</span> UI UX Fundamentals..
+                                <span style="color: #F6C768; font-size: 14px;">●</span> Fundamentos de UI/UX
                             </span>
                             <span style="font-size: 12px; color: #64748B; display: inline-flex; align-items: center; gap: 4px;">
-                                <span style="color: #6C5CE7; font-size: 14px;">●</span> UI Colours theories..
+                                <span style="color: #6C5CE7; font-size: 14px;">●</span> Teoria das Cores em UI
                             </span>
                         </div>
                     </div>
                     <div style="font-size: 13px; font-weight: 700; color: #4E44B4; background: #EEF2FF; padding: 6px 14px; border-radius: 10px;">
-                        Weekly ▾
+                        Semanal ▾
                     </div>
                 </div>
             </div>
@@ -444,20 +449,20 @@ if opcao_menu == "Dashboard":
         with col_chart:
             # Dados de atividade semanal dos dias 08 a 14 de home principal.png
             dados_atividade = [
-                {"day": "08", "category": "UI UX Fundamentals", "hours": 1.2, "color": "#F6C768"},
-                {"day": "08", "category": "UI Colours theories", "hours": 3.4, "color": "#6C5CE7"},
-                {"day": "09", "category": "UI UX Fundamentals", "hours": 2.8, "color": "#F6C768"},
-                {"day": "09", "category": "UI Colours theories", "hours": 2.5, "color": "#6C5CE7"},
-                {"day": "10", "category": "UI UX Fundamentals", "hours": 3.5, "color": "#F6C768"},
-                {"day": "10", "category": "UI Colours theories", "hours": 1.9, "color": "#6C5CE7"},
-                {"day": "11", "category": "UI UX Fundamentals", "hours": 2.1, "color": "#F6C768"},
-                {"day": "11", "category": "UI Colours theories", "hours": 4.5, "color": "#6C5CE7"},
-                {"day": "12", "category": "UI UX Fundamentals", "hours": 3.8, "color": "#F6C768"},
-                {"day": "12", "category": "UI Colours theories", "hours": 5.1, "color": "#6C5CE7"},
-                {"day": "13", "category": "UI UX Fundamentals", "hours": 4.2, "color": "#F6C768"},
-                {"day": "13", "category": "UI Colours theories", "hours": 0.8, "color": "#6C5CE7"},
-                {"day": "14", "category": "UI UX Fundamentals", "hours": 4.9, "color": "#F6C768"},
-                {"day": "14", "category": "UI Colours theories", "hours": 3.3, "color": "#6C5CE7"},
+                {"day": "08", "category": "Fundamentos de UI/UX", "hours": 1.2, "color": "#F6C768"},
+                {"day": "08", "category": "Teoria das Cores em UI", "hours": 3.4, "color": "#6C5CE7"},
+                {"day": "09", "category": "Fundamentos de UI/UX", "hours": 2.8, "color": "#F6C768"},
+                {"day": "09", "category": "Teoria das Cores em UI", "hours": 2.5, "color": "#6C5CE7"},
+                {"day": "10", "category": "Fundamentos de UI/UX", "hours": 3.5, "color": "#F6C768"},
+                {"day": "10", "category": "Teoria das Cores em UI", "hours": 1.9, "color": "#6C5CE7"},
+                {"day": "11", "category": "Fundamentos de UI/UX", "hours": 2.1, "color": "#F6C768"},
+                {"day": "11", "category": "Teoria das Cores em UI", "hours": 4.5, "color": "#6C5CE7"},
+                {"day": "12", "category": "Fundamentos de UI/UX", "hours": 3.8, "color": "#F6C768"},
+                {"day": "12", "category": "Teoria das Cores em UI", "hours": 5.1, "color": "#6C5CE7"},
+                {"day": "13", "category": "Fundamentos de UI/UX", "hours": 4.2, "color": "#F6C768"},
+                {"day": "13", "category": "Teoria das Cores em UI", "hours": 0.8, "color": "#6C5CE7"},
+                {"day": "14", "category": "Fundamentos de UI/UX", "hours": 4.9, "color": "#F6C768"},
+                {"day": "14", "category": "Teoria das Cores em UI", "hours": 3.3, "color": "#6C5CE7"},
             ]
             df_chart = pd.DataFrame(dados_atividade)
 
@@ -470,7 +475,7 @@ if opcao_menu == "Dashboard":
                     color=alt.Color(
                         "category:N",
                         scale=alt.Scale(
-                            domain=["UI UX Fundamentals", "UI Colours theories"],
+                            domain=["Fundamentos de UI/UX", "Teoria das Cores em UI"],
                             range=["#F6C768", "#6C5CE7"]
                         ),
                         legend=None
@@ -487,7 +492,7 @@ if opcao_menu == "Dashboard":
             st.markdown(
                 f"""
                 <div class="metric-summary-box">
-                    <div class="metric-summary-label">Hours Spent</div>
+                    <div class="metric-summary-label">Horas de estudo</div>
                     <div class="metric-summary-row">
                         <span class="metric-summary-value">12</span>
                         <span class="badge-pill-success">▲ 10%</span>
@@ -495,7 +500,7 @@ if opcao_menu == "Dashboard":
                 </div>
 
                 <div class="metric-summary-box">
-                    <div class="metric-summary-label">Average Score</div>
+                    <div class="metric-summary-label">Nota média</div>
                     <div class="metric-summary-row">
                         <span class="metric-summary-value">86</span>
                         <span class="badge-pill-danger">▼ 10%</span>
@@ -503,7 +508,7 @@ if opcao_menu == "Dashboard":
                 </div>
 
                 <div class="metric-summary-box">
-                    <div class="metric-summary-label">Assignments</div>
+                    <div class="metric-summary-label">Obrigações</div>
                     <div class="metric-summary-row">
                         <span class="metric-summary-value">{tarefas_pendentes_total}</span>
                         <span class="badge-pill-warning">Pendentes</span>
@@ -515,8 +520,8 @@ if opcao_menu == "Dashboard":
 
         st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
-        # 4. Seção "Browse Courses" (Inspirada no rodapé de home principal.png)
-        st.markdown("### 📚 Browse Courses")
+        # 4. Seção de disciplinas (Inspirada no rodapé de home principal.png)
+        st.markdown("### 📚 Explorar Disciplinas")
         col_c1, col_c2 = st.columns(2)
 
         if termo_busca:
@@ -556,37 +561,87 @@ if opcao_menu == "Dashboard":
 
     # Painel Lateral de Atividades Futuras (Coluna da Direita)
     with col_upcoming:
+        st.markdown("### Próximas Atividades")
+
+        hoje = datetime.date.today()
+        atividades_pendentes = []
+        for tarefa in todas_tarefas:
+            status = str(tarefa.get("status", "")).strip().lower()
+            if status in ("concluído", "concluido", "done"):
+                continue
+
+            data_entrega = str(tarefa.get("due_date", "")).strip()
+            try:
+                prazo = datetime.date.fromisoformat(data_entrega)
+                prazo_timestamp = datetime.datetime.combine(prazo, datetime.time.min).timestamp()
+            except (TypeError, ValueError):
+                prazo = datetime.date.max
+                prazo_timestamp = 253402300799
+
+            atividades_pendentes.append((prazo, prazo_timestamp, tarefa))
+
+        atividades_pendentes.sort(key=lambda item: (item[0] == datetime.date.max, item[1]))
+        atividades_visiveis = atividades_pendentes[:4]
+
+        if not atividades_visiveis:
+            st.info("Nenhuma atividade pendente por enquanto.")
+        else:
+            for prazo, _, tarefa in atividades_visiveis:
+                tarefa_id = int(tarefa.get("id", 0))
+                titulo = str(tarefa.get("title", "Atividade sem título"))
+                descricao = str(tarefa.get("description", "")).strip()
+                status = str(tarefa.get("status", "Pendente"))
+                disciplina_id = int(tarefa.get("subject_id", 0))
+                disciplina = next(
+                    (d for d in todas_disciplinas if int(d.get("id", 0)) == disciplina_id),
+                    None,
+                )
+                disciplina_nome = disciplina.get("name", f"Disciplina #{disciplina_id}") if disciplina else f"Disciplina #{disciplina_id}"
+
+                diferenca = (prazo - hoje).days
+                if prazo == datetime.date.max:
+                    texto_prazo = "Prazo não informado"
+                elif diferenca < 0:
+                    texto_prazo = f"Atrasada há {abs(diferenca)} dia{'s' if abs(diferenca) != 1 else ''}"
+                elif diferenca == 0:
+                    texto_prazo = "Hoje"
+                elif diferenca == 1:
+                    texto_prazo = "Amanhã"
+                else:
+                    texto_prazo = prazo.strftime("%d/%m/%Y")
+
+                cor_borda = "#EF4444" if diferenca < 0 else ("#F59E0B" if diferenca <= 1 else "#6C5CE7")
+
+                with st.container(border=True):
+                    st.markdown(
+                        f"""
+                        <div style="border-left: 4px solid {cor_borda}; padding-left: 10px;">
+                            <div style="font-size: 11px; font-weight: 800; color: {cor_borda};">{html.escape(texto_prazo)}</div>
+                            <div style="font-size: 14px; font-weight: 800; color: #1E293B; margin: 4px 0;">
+                                {html.escape(titulo)}
+                            </div>
+                            <div style="font-size: 12px; color: #64748B;">{html.escape(disciplina_nome)} • {html.escape(status)}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    if descricao:
+                        st.caption(descricao)
+                    if st.button(
+                        "✓ Marcar como concluída",
+                        key=f"concluir_painel_{tarefa_id}",
+                        use_container_width=True,
+                    ):
+                        update_task_status(tarefa_id, "Concluído", token=auth_token)
+                        st.success("Atividade concluída!")
+                        st.rerun()
+
         st.markdown(
             """
-            <div style="background: #FFFFFF; border-radius: 18px; padding: 20px; border: 1px solid #ECEFF7; box-shadow: 0 4px 16px rgba(0,0,0,0.02); margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <div style="font-weight: 800; font-size: 16px; color: #1E293B;">Upcoming Schedule</div>
-                    <span style="font-size: 12px; color: #4E44B4; font-weight: 700;">Próximos Prazos</span>
-                </div>
-
-                <div style="border-left: 3px solid #6C5CE7; padding-left: 12px; margin-bottom: 16px;">
-                    <div style="font-size: 11px; font-weight: 700; color: #6C5CE7;">HOJE • 14:00</div>
-                    <div style="font-size: 13px; font-weight: 700; color: #1E293B;">UI UX Design Critique</div>
-                    <div style="font-size: 12px; color: #64748B;">Apresentação do protótipo com a turma</div>
-                </div>
-
-                <div style="border-left: 3px solid #F6C768; padding-left: 12px; margin-bottom: 16px;">
-                    <div style="font-size: 11px; font-weight: 700; color: #D97706;">AMANHÃ • 23:59</div>
-                    <div style="font-size: 13px; font-weight: 700; color: #1E293B;">Entrega: Color Theories</div>
-                    <div style="font-size: 12px; color: #64748B;">Envio da paleta com contraste WCAG</div>
-                </div>
-
-                <div style="border-left: 3px solid #10B981; padding-left: 12px;">
-                    <div style="font-size: 11px; font-weight: 700; color: #059669;">SEXTA • 10:00</div>
-                    <div style="font-size: 13px; font-weight: 700; color: #1E293B;">Mentoria com Tutor IA</div>
-                    <div style="font-size: 12px; color: #64748B;">Revisão das métricas acadêmicas</div>
-                </div>
-            </div>
-
-            <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border-radius: 18px; padding: 20px; border: 1px solid #C7D2FE;">
+            <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border-radius: 18px; padding: 20px; border: 1px solid #C7D2FE; margin-top: 16px;">
                 <div style="font-weight: 800; color: #38337A; font-size: 15px; margin-bottom: 6px;">💡 Dica de Estudo com IA</div>
                 <div style="font-size: 12px; color: #4338CA; line-height: 1.5;">
-                    Estudar 30 minutos em blocos focados (Pomodoro) melhora a retenção e reduz a sobrecarga antes das avaliações.
+                    Estudar 30 minutos em blocos focados melhora a retenção e reduz a sobrecarga antes das avaliações.
                 </div>
             </div>
             """,
@@ -716,7 +771,7 @@ if opcao_menu == "Dashboard":
         )
 
         story = []
-        story.append(Paragraph("🎓 EduTrack AI — Smart Education", style_title))
+        story.append(Paragraph("🎓 EduTrack AI — Educação Inteligente", style_title))
         story.append(Paragraph("Relatório Oficial de Desempenho e Aproveitamento Acadêmico", style_sub))
         story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#38337A"), spaceAfter=12))
 
@@ -781,8 +836,8 @@ if opcao_menu == "Dashboard":
         ]
         offset = aluno["Nota Média"] - 14.0
         disciplinas = [
-            ("UI UX Fundamentals", "Prof. Dr. Ricardo Neves", "80h", max(0.0, min(20.0, round(14.5 + offset, 1)))),
-            ("UI Colours theories", "Prof. Ana Ribeiro", "60h", max(0.0, min(20.0, round(15.2 + offset, 1)))),
+            ("Fundamentos de UI/UX", "Prof. Dr. Ricardo Neves", "80h", max(0.0, min(20.0, round(14.5 + offset, 1)))),
+            ("Teoria das Cores em UI", "Prof. Ana Ribeiro", "60h", max(0.0, min(20.0, round(15.2 + offset, 1)))),
             ("Algoritmos e Programação", "Prof. Carlos Duarte", "80h", max(0.0, min(20.0, round(13.8 + offset, 1)))),
             ("Inteligência Artificial & Lab", "Prof. Guilherme Grima", "80h", max(0.0, min(20.0, round(16.0 + offset, 1)))),
         ]
@@ -873,8 +928,8 @@ if opcao_menu == "Dashboard":
 # -----------------------------------------------------------------------------
 # ABA 2: MY COURSES & GESTÃO DE OBRIGAÇÕES ACADÊMICAS (ACADEMIC TASKS)
 # -----------------------------------------------------------------------------
-elif opcao_menu == "My Courses":
-    st.markdown("## 📚 My Courses & Gestão de Obrigações Acadêmicas")
+elif opcao_menu == "Minhas Matérias":
+    st.markdown("## 📚 Minhas Disciplinas & Gestão de Obrigações Acadêmicas")
     st.caption("Registre e acompanhe lições, provas e trabalhos vinculados a cada uma de suas disciplinas.")
 
     # 1. Formulário para Registrar Nova Disciplina (Tabela subjects do Xano)
@@ -1115,8 +1170,48 @@ elif opcao_menu == "My Courses":
 # ABA 3: MODO PROVA — PREPARAÇÃO ATIVA PARA AVALIAÇÕES
 # -----------------------------------------------------------------------------
 elif opcao_menu == "Modo Prova":
-    st.markdown("## 🎯 Modo Prova — Preparação Ativa para Avaliações")
-    st.caption("Planejamento com contagem regressiva, simulados adaptativos, mapa de domínio e revisão focada na véspera.")
+    col_t_title, col_t_ai_status = st.columns([3.2, 1.8])
+    with col_t_title:
+        st.markdown("## 🎯 Modo Prova — Preparação Ativa para Avaliações")
+        st.caption("Planejamento com contagem regressiva, simulados adaptativos, mapa de domínio e revisão focada na véspera.")
+    with col_t_ai_status:
+        if gemini_service.is_gemini_available():
+            st.markdown(
+                """
+                <div style="text-align: right; margin-top: 8px;">
+                    <span style="background: #ECFDF5; color: #047857; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 999px; border: 1px solid #A7F3D0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        ✨ IA Gemini Ativa (gemini-3.5-flash-lite)
+                    </span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            c_badge, c_pop = st.columns([2.2, 1.2])
+            with c_badge:
+                st.markdown(
+                    """
+                    <div style="text-align: right; margin-top: 6px;">
+                        <span style="background: #F8FAFC; color: #64748B; font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 999px; border: 1px solid #CBD5E1;">
+                            ⚙️ Modo Heurístico Local
+                        </span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with c_pop:
+                with st.popover("🔑 Como ativar a IA?", use_container_width=True):
+                    st.markdown(
+                        """
+                        **Como habilitar o Google Gemini:**
+                        1. Abra ou crie o arquivo `.streamlit/secrets.toml`
+                        2. Insira sua chave obtida no [Google AI Studio](https://aistudio.google.com/app/apikey):
+                        ```toml
+                        GEMINI_API_KEY = "sua_chave_aqui"
+                        ```
+                        3. Ou defina a variável de ambiente `GEMINI_API_KEY`.
+                        """
+                    )
 
     todas_provas = get_exams()
 
@@ -1140,10 +1235,11 @@ elif opcao_menu == "Modo Prova":
 
     st.markdown("")
 
-    # Abas organizadas do Modo Prova
-    tab_plano, tab_simulado, tab_d1, tab_nova_prova = st.tabs([
+    # Abas organizadas do Modo Prova com a nova aba de Resumo & Flashcards
+    tab_plano, tab_simulado, tab_resumo, tab_d1, tab_nova_prova = st.tabs([
         "📅 Plano & Cronograma",
         "📝 Simulado & Quizzes",
+        "📚 Resumo & Flashcards",
         "⚡ Revisão D-1",
         "➕ Configurar Nova Prova",
     ])
@@ -1249,11 +1345,18 @@ elif opcao_menu == "Modo Prova":
             st.markdown("---")
 
             # Checklist do Cronograma Diário até a Prova
-            st.markdown("### 📋 Cronograma de Revisão Diário")
+            col_plan_hdr, col_plan_tag = st.columns([3, 1])
+            with col_plan_hdr:
+                st.markdown("### 📋 Cronograma de Revisão Diário")
+            with col_plan_tag:
+                if plano.get("ai_generated"):
+                    st.markdown("<span style='float:right; font-size:11px; background:#F5F3FF; color:#6C5CE7; padding:3px 8px; border-radius:6px; font-weight:700;'>✨ Adaptado por IA Gemini</span>", unsafe_allow_html=True)
+
             for item_p in plano["schedule"]:
                 badge_bg = "#EDE9FE" if item_p.get("is_current") else "#F8FAFC"
                 badge_color = "#6C5CE7" if item_p.get("is_current") else "#475569"
                 borda = "2px solid #6C5CE7" if item_p.get("is_current") else "1px solid #E2E8F0"
+                technique_badge = f"<span style='font-size: 11px; color: #0284C7; background: #E0F2FE; padding: 2px 8px; border-radius: 4px; margin-left: 8px;'>💡 {item_p['study_technique']}</span>" if item_p.get("study_technique") else ""
 
                 with st.container():
                     st.markdown(
@@ -1263,7 +1366,10 @@ elif opcao_menu == "Modo Prova":
                                 <span style="background: {badge_bg}; color: {badge_color}; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">
                                     {item_p['day']} • {item_p['date']}
                                 </span>
-                                <span style="font-size: 12px; font-weight: 700; color: #64748B;">{item_p['focus']}</span>
+                                <div>
+                                    <span style="font-size: 12px; font-weight: 700; color: #64748B;">{item_p['focus']}</span>
+                                    {technique_badge}
+                                </div>
                             </div>
                             <div style="font-size: 13px; color: #334155; margin-top: 6px;">
                                 🎯 <b>Metas do Dia:</b> {', '.join(item_p['tasks'])}
@@ -1280,16 +1386,20 @@ elif opcao_menu == "Modo Prova":
     # -------------------------------------------------------------------------
     with tab_simulado:
         if ex_ativo:
-            st.markdown("### 📝 Simulado Interativo & Validação Ativa")
-            st.markdown(
-                """
-                <div style="font-size: 13px; color: #64748B; margin-bottom: 14px;">
-                    Responda às questões para atualizar seu índice de preparo. Cada item indica a <b>origem do conteúdo</b>.
-                    Você pode aprovar, editar o enunciado ou rejeitar qualquer questão gerada pela IA.
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            col_sim_hdr, col_sim_btn = st.columns([3, 1.2])
+            with col_sim_hdr:
+                st.markdown("### 📝 Simulado Interativo & Validação Ativa")
+                st.caption("Responda às questões para atualizar seu índice de preparo. Cada item indica a origem do conteúdo.")
+            with col_sim_btn:
+                if gemini_service.is_gemini_available():
+                    if st.button("✨ Gerar +3 Questões com IA", key="btn_add_ai_questions", use_container_width=True):
+                        with st.spinner("Consultando a IA do Gemini para gerar novas questões pedagógicas..."):
+                            try:
+                                generate_additional_questions_with_ai(ex_ativo["id"], num_questions=3)
+                                st.success("Novas questões adicionadas com sucesso!")
+                                st.rerun()
+                            except Exception as ex_ai_err:
+                                st.error(f"Erro ao consultar a IA: {ex_ai_err}")
 
             questoes = get_mock_questions(ex_ativo["id"])
 
@@ -1337,7 +1447,7 @@ elif opcao_menu == "Modo Prova":
                                     question_id=q_id,
                                     selected_option=escolha,
                                     is_correct=is_correta,
-                                )
+                                    )
                                 if is_correta:
                                     st.success(f"🎉 Resposta Correta! {q.get('explanation', '')}")
                                 else:
@@ -1364,18 +1474,81 @@ elif opcao_menu == "Modo Prova":
             st.warning("Cadastre uma avaliação para gerar o simulado.")
 
     # -------------------------------------------------------------------------
-    # TAB 3: REVISÃO FINAL CONDENSADA D-1 (VÉSPERA DA PROVA)
+    # TAB 3: RESUMO CONCEITUAL & FLASHCARDS DA IA
+    # -------------------------------------------------------------------------
+    with tab_resumo:
+        if ex_ativo:
+            col_res_hdr, col_res_btn = st.columns([3, 1.2])
+            with col_res_hdr:
+                st.markdown("### 📚 Resumo Executivo & Flashcards Ativos")
+                st.caption("Síntese dos tópicos principais e карточки de pergunta e resposta para repetição espaçada.")
+            with col_res_btn:
+                if gemini_service.is_gemini_available():
+                    if st.button("🔄 Regenerar Síntese com IA", key="btn_regen_ai_summary", use_container_width=True):
+                        with st.spinner("Atualizando resumo e flashcards com o Gemini..."):
+                            get_exam_ai_summary_and_flashcards(ex_ativo["id"], force_regenerate=True)
+                            st.success("Resumo e flashcards atualizados!")
+                            st.rerun()
+
+            resumo_obj = get_exam_ai_summary_and_flashcards(ex_ativo["id"])
+
+            st.markdown(
+                f"""
+                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; margin-bottom: 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
+                    <div style="font-size: 15px; font-weight: 700; color: #1E293B; margin-bottom: 8px;">
+                        📖 Síntese Estruturada da Matéria
+                    </div>
+                    <div style="font-size: 14px; color: #334155; line-height: 1.6; margin-bottom: 14px;">
+                        {resumo_obj.get('summary', 'Resumo dos tópicos da prova.')}
+                    </div>
+                    <div style="font-size: 13px; font-weight: 700; color: #6C5CE7; margin-bottom: 6px;">
+                        🎯 Pontos-Chave para Lembrar:
+                    </div>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #475569;">
+                        {''.join([f"<li>{kp}</li>" for kp in resumo_obj.get('key_points', [])])}
+                    </ul>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            st.markdown("#### 🎴 Flashcards de Memorização Ativa")
+            flashcards = resumo_obj.get("flashcards", [])
+            if not flashcards:
+                st.info("Nenhum flashcard disponível para esta avaliação.")
+            else:
+                for idx_fc, fc in enumerate(flashcards):
+                    with st.expander(f"Cartão #{idx_fc + 1}: {fc.get('topic', 'Geral')} — {fc.get('front', '')}"):
+                        st.markdown(
+                            f"""
+                            <div style="background: #F8FAFC; border-left: 4px solid #6C5CE7; border-radius: 8px; padding: 12px; margin-top: 4px;">
+                                <div style="font-size: 12px; font-weight: 700; color: #6C5CE7; margin-bottom: 4px;">💡 Resposta / Fundamentação:</div>
+                                <div style="font-size: 14px; color: #1E293B;">{fc.get('back', '')}</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+        else:
+            st.warning("Cadastre uma avaliação para gerar os resumos e flashcards.")
+
+    # -------------------------------------------------------------------------
+    # TAB 4: REVISÃO FINAL CONDENSADA D-1 (VÉSPERA DA PROVA)
     # -------------------------------------------------------------------------
     with tab_d1:
         if ex_ativo:
             revisao_d1 = get_d1_emergency_review(ex_ativo["id"])
 
+            tag_ai_d1 = "<span style='float:right; font-size:11px; background:#FED7AA; color:#9A3412; padding:3px 8px; border-radius:6px; font-weight:700;'>✨ Cirúrgico por IA</span>" if revisao_d1.get("ai_generated") else ""
+
             st.markdown(
-                """
+                f"""
                 <div style="background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border: 1px solid #FDBA74; border-radius: 14px; padding: 18px; margin-bottom: 16px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                        <span style="font-size: 24px;">⚡</span>
-                        <span style="font-size: 18px; font-weight: 800; color: #9A3412;">Revisão Final D-1: Foco Total nas Suas Vulnerabilidades</span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">⚡</span>
+                            <span style="font-size: 18px; font-weight: 800; color: #9A3412;">Revisão Final D-1: Foco Total nas Suas Vulnerabilidades</span>
+                        </div>
+                        {tag_ai_d1}
                     </div>
                     <div style="font-size: 13px; color: #7C2D12;">
                         Faltam poucas horas para a prova. Esta síntese elimina o excesso de conteúdo e foca <b>apenas</b> nos tópicos
@@ -1388,6 +1561,8 @@ elif opcao_menu == "Modo Prova":
 
             st.markdown("#### 🎯 Tópicos de Maior Risco Identificados:")
             for card in revisao_d1["cards"]:
+                formula_html = f"<div style='font-size: 12px; color: #7C3AED; background: #EDE9FE; padding: 4px 10px; border-radius: 6px; margin-top: 6px;'><b>🧠 Macete / Fórmula:</b> {card['formula_or_mnemonic']}</div>" if card.get("formula_or_mnemonic") else ""
+
                 st.markdown(
                     f"""
                     <div style="background: #FFFFFF; border-left: 5px solid #EA580C; border: 1px solid #FED7AA; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
@@ -1403,6 +1578,7 @@ elif opcao_menu == "Modo Prova":
                         <div style="font-size: 12px; color: #0284C7; font-weight: 600;">
                             💡 <b>Ação Recomendada:</b> {card['recommended_action']}
                         </div>
+                        {formula_html}
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -1413,9 +1589,10 @@ elif opcao_menu == "Modo Prova":
             st.warning("Cadastre uma avaliação para gerar a revisão D-1.")
 
     # -------------------------------------------------------------------------
-    # TAB 4: CONFIGURAÇÃO DE NOVA PROVA
+    # TAB 5: CONFIGURAÇÃO DE NOVA PROVA
     # -------------------------------------------------------------------------
     with tab_nova_prova:
+
         st.markdown("### 🎯 Cadastrar Nova Avaliação para Preparação")
         st.markdown(
             """

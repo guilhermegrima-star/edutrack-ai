@@ -64,8 +64,8 @@ SUBJECT_PALETTE = [
 
 # Lista padrão de disciplinas do curso (para fallback offline / demonstração)
 DEFAULT_SUBJECTS = [
-    {"id": 1, "name": "UI UX Fundamentals", "teacher": "Prof. Ana Ribeiro", "hours": 80, "color": "#6C5CE7"},
-    {"id": 2, "name": "UI Colours theories", "teacher": "Prof. Carlos Duarte", "hours": 60, "color": "#F6C768"},
+    {"id": 1, "name": "Fundamentos de UI/UX", "teacher": "Prof. Ana Ribeiro", "hours": 80, "color": "#6C5CE7"},
+    {"id": 2, "name": "Teoria das Cores em UI", "teacher": "Prof. Carlos Duarte", "hours": 60, "color": "#F6C768"},
     {"id": 3, "name": "Algoritmos e Programação", "teacher": "Prof. Ricardo Neves", "hours": 80, "color": "#4E44B4"},
     {"id": 4, "name": "Inteligência Artificial & Lab", "teacher": "Prof. Guilherme Grima", "hours": 80, "color": "#10B981"},
     {"id": 5, "name": "Bases de Dados Relacionais", "teacher": "Prof. Carlos Duarte", "hours": 60, "color": "#3B82F6"},
