@@ -1,8 +1,8 @@
 """
-pages/3_🔒_Perfil.py
+pages/3_Perfil.py
 --------------------
 Página de Perfil do Usuário no EduTrack AI.
-Reformulada de acordo com os padrões visuais de /assets/home principal.png.
+Reformulada de acordo com o novo sistema visual da aplicação.
 Formulários de login e cadastro removidos — autenticação centralizada na página principal (app.py).
 """
 
@@ -17,7 +17,7 @@ import streamlit as st
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Perfil do Aluno - EduTrack AI",
-    page_icon="👤",
+    page_icon="P",
     layout="wide"
 )
 
@@ -47,10 +47,10 @@ render_sidebar_header()
 
 st.sidebar.markdown("---")
 if hasattr(st, "page_link"):
-    st.sidebar.page_link("app.py", label="⊞ Ir para o Dashboard", icon="📊")
+    st.sidebar.page_link("app.py", label="Ir para o Dashboard")
 
 st.sidebar.markdown("---")
-if st.sidebar.button("🚪 Encerrar Sessão", use_container_width=True):
+if st.sidebar.button("Encerrar Sessão", use_container_width=True):
     perform_logout()
 
 # -----------------------------------------------------------------------------
@@ -96,7 +96,7 @@ st.markdown(
     f"""
     <div class="welcome-banner">
         <div>
-            <h2>Perfil Acadêmico de {user_name} 👤</h2>
+            <h2>Perfil Acadêmico de {user_name}</h2>
             <p>
                 Gerencie seus dados de acesso, verifique sua matrícula e faça download do seu relatório oficial de desempenho individual.
             </p>
@@ -110,7 +110,7 @@ st.markdown(
 )
 
 # Cartões de Informações Cadastrais
-st.markdown("### 📋 Informações Cadastrais")
+st.markdown("### Informações Cadastrais")
 
 col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
 with col_kpi1:
@@ -217,7 +217,7 @@ st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
 # -----------------------------------------------------------------------------
 # Seção de Relatório Individual em PDF
 # -----------------------------------------------------------------------------
-st.markdown("### 📄 Emissão do Relatório Acadêmico Individual")
+st.markdown("### Emissão do Relatório Acadêmico Individual")
 st.markdown(
     """
     <div class="activity-card">
@@ -238,12 +238,12 @@ st.markdown(
 col_pdf_act1, col_pdf_act2 = st.columns([1, 2])
 
 with col_pdf_act1:
-    gerar_relatorio = st.button("📊 Compilar Relatório PDF", type="primary", use_container_width=True)
+    gerar_relatorio = st.button("Compilar Relatório PDF", type="primary", use_container_width=True)
 
 with col_pdf_act2:
     if "cached_pdf_bytes" in st.session_state and st.session_state["cached_pdf_bytes"]:
         st.download_button(
-            label="⬇️ Baixar Arquivo PDF Gerado",
+            label="Baixar Arquivo PDF Gerado",
             data=st.session_state["cached_pdf_bytes"],
             file_name=st.session_state.get("cached_pdf_name", "relatorio_desempenho.pdf"),
             mime="application/pdf",
@@ -275,7 +275,7 @@ st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
 col_action1, col_action2, _ = st.columns([1, 1, 2])
 
 with col_action1:
-    if st.button("🔄 Atualizar Informações", use_container_width=True):
+    if st.button("Atualizar Informações", use_container_width=True):
         if auth_token:
             with st.spinner("Atualizando perfil..."):
                 ok, result = xano_get_me(auth_token)
@@ -287,5 +287,5 @@ with col_action1:
                     st.error(f"Erro ao atualizar: {result}")
 
 with col_action2:
-    if st.button("🚪 Encerrar Sessão", type="secondary", use_container_width=True):
+    if st.button("Encerrar Sessão", type="secondary", use_container_width=True):
         perform_logout()
