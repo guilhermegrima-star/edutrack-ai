@@ -450,14 +450,14 @@ def create_task(
 
     # Validação da disciplina
     if subject_id is None:
-        raise ValueError("A disciplina vinculada (subject_id) é obrigatória.")
+        raise ValueError("Selecione uma disciplina para esta atividade.")
 
     try:
         int_subject_id = int(subject_id)
         if int_subject_id <= 0:
             raise ValueError()
     except (TypeError, ValueError):
-        raise ValueError("O identificador da disciplina (subject_id) deve ser um número inteiro válido.")
+        raise ValueError("A disciplina selecionada não é válida.")
 
     clean_status = str(status).strip() if status else "Pendente"
     clean_desc = str(description).strip() if description else ""
@@ -468,7 +468,7 @@ def create_task(
     user_subjects = get_subjects(token=resolved_token)
     user_subject_ids = [int(s.get("id", 0)) for s in user_subjects if s.get("id") is not None]
     if user_subject_ids and int_subject_id not in user_subject_ids:
-        raise ValueError(f"Acesso negado: a disciplina ID #{int_subject_id} não pertence ao usuário autenticado.")
+        raise ValueError("A disciplina selecionada não está vinculada à sua conta.")
 
     payload = {
         "title": clean_title,

@@ -78,44 +78,6 @@ header[data-testid="stHeader"] {
     box-shadow: 0 4px 14px rgba(78, 68, 180, 0.4);
 }
 
-/* Card do plano Pro na barra lateral */
-.pro-card-sidebar {
-    background: linear-gradient(135deg, #4E44B4 0%, #3B3486 100%);
-    border-radius: 18px;
-    padding: 20px 16px;
-    color: white;
-    margin-top: 24px;
-    box-shadow: 0 8px 24px rgba(56, 51, 122, 0.35);
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.pro-card-sidebar h4 {
-    color: #FFFFFF !important;
-    font-size: 16px;
-    font-weight: 800;
-    margin: 0 0 6px 0;
-}
-
-.pro-card-sidebar p {
-    color: #E0E7FF !important;
-    font-size: 12px;
-    line-height: 1.4;
-    margin: 0 0 14px 0;
-}
-
-.pro-card-badge {
-    display: inline-block;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #FFDE59;
-    margin-bottom: 8px;
-}
-
 /* Botões primários */
 .stButton > button[kind="primary"],
 .stButton > button:first-child:not([kind="secondary"]) {
@@ -584,32 +546,6 @@ def render_sidebar_header():
                 <div style="font-size: 11px; font-weight: 600; color: #C7D2FE; letter-spacing: 0.05em; text-transform: uppercase;">
                     EduTrack AI
                 </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_sidebar_pro_card():
-    """Renderiza o card de plano Pro no rodapé da Sidebar como visto em assets/home principal.png."""
-    st.sidebar.markdown(
-        """
-        <div class="pro-card-sidebar">
-            <div class="pro-card-badge">EDIÇÃO PRO</div>
-            <h4>Assine o Plano Pro 🚀</h4>
-            <p>Tenha tutoria de IA ilimitada, análises avançadas de desempenho e relatórios em PDF personalizados.</p>
-            <div style="
-                background: rgba(255, 255, 255, 0.95);
-                color: #38337A;
-                font-weight: 700;
-                font-size: 12px;
-                text-align: center;
-                padding: 8px 12px;
-                border-radius: 10px;
-                cursor: pointer;
-            ">
-                Conheça o Plano Pro!
             </div>
         </div>
         """,
