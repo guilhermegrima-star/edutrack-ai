@@ -16,8 +16,7 @@ import html
 # -----------------------------------------------------------------------------
 CSS_DASHBOARD = """
 <style>
-/* Importação de fontes modernas */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
 
 html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -26,7 +25,7 @@ html, body, [class*="css"] {
 
 /* Fundo da aplicação */
 .stApp {
-    background-color: #F8F9FD !important;
+    background: #F4F7FA !important;
 }
 
 /* Barra Superior do Streamlit */
@@ -36,8 +35,8 @@ header[data-testid="stHeader"] {
 
 /* Barra lateral com estilo de educação inteligente */
 [data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #38337A 0%, #302B6D 100%) !important;
-    border-right: none !important;
+    background: #10233A !important;
+    border-right: 1px solid #1C3552 !important;
 }
 
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
@@ -72,23 +71,23 @@ header[data-testid="stHeader"] {
 
 [data-testid="stSidebar"] .stRadio > div > label[data-checked="true"],
 [data-testid="stSidebar"] .stRadio > div > label:has(input:checked) {
-    background: #4E44B4 !important;
-    color: #FFFFFF !important;
+    background: #DFF37A !important;
+    color: #10233A !important;
     font-weight: 600;
-    box-shadow: 0 4px 14px rgba(78, 68, 180, 0.4);
+    box-shadow: none;
 }
 
 /* Botões primários */
 .stButton > button[kind="primary"],
 .stButton > button:first-child:not([kind="secondary"]) {
-    background: #4E44B4 !important;
+    background: #2456A6 !important;
     color: #FFFFFF !important;
     border: none !important;
-    border-radius: 12px !important;
+    border-radius: 8px !important;
     padding: 10px 22px !important;
     font-weight: 600 !important;
     font-size: 14px !important;
-    box-shadow: 0 4px 14px rgba(78, 68, 180, 0.25) !important;
+    box-shadow: 0 3px 10px rgba(36, 86, 166, 0.16) !important;
     transition: all 0.2s ease;
 }
 
@@ -128,15 +127,16 @@ header[data-testid="stHeader"] {
 
 /* Banner de Boas-Vindas Lilás */
 .welcome-banner {
-    background: linear-gradient(135deg, #F5EDFF 0%, #EDE5FC 50%, #E6DDFA 100%);
-    border-radius: 22px;
+    background: #FFFFFF;
+    border-radius: 14px;
     padding: 28px 32px;
     margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border: 1px solid #E4D7F7;
-    box-shadow: 0 6px 20px rgba(110, 89, 165, 0.06);
+    border: 1px solid #DDE6EF;
+    border-left: 5px solid #2456A6;
+    box-shadow: 0 4px 16px rgba(16, 35, 58, 0.05);
     position: relative;
     overflow: hidden;
 }
@@ -166,18 +166,21 @@ header[data-testid="stHeader"] {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 24px rgba(78, 68, 180, 0.15);
-    border: 3px solid #EDE5FC;
-    font-size: 42px;
+    background: #EAF1FB;
+    box-shadow: none;
+    border: 1px solid #C9D9EF;
+    font-family: 'Manrope', sans-serif;
+    font-size: 28px;
+    color: #2456A6;
 }
 
 /* Cards Rápidos de KPI */
 .kpi-card {
     background: #FFFFFF;
-    border-radius: 18px;
+    border-radius: 12px;
     padding: 22px 24px;
     border: 1px solid #ECEFF7;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 3px 12px rgba(16, 35, 58, 0.04);
     display: flex;
     align-items: center;
     gap: 18px;
@@ -529,15 +532,16 @@ def render_sidebar_header():
             <div style="
                 width: 42px;
                 height: 42px;
-                background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 50%, #4D96FF 100%);
-                border-radius: 12px;
+                background: #DFF37A;
+                border-radius: 10px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-                font-size: 22px;
+                font-size: 17px;
+                color: #10233A;
             ">
-                ✏️
+                🎓
             </div>
             <div>
                 <div style="font-size: 19px; font-weight: 800; color: #FFFFFF; line-height: 1.1; letter-spacing: -0.02em;">
@@ -560,14 +564,14 @@ def render_welcome_banner(user_name: str = "Aluno(a)", days_streak: int = 4):
         f"""
         <div class="welcome-banner">
             <div>
-                <h2>Olá novamente, {clean_name}! 🎓</h2>
+                <h2>Olá novamente, {clean_name}</h2>
                 <p>
                     Esta semana você manteve <b>{days_streak} dias consecutivos de estudos</b>! 
                     Continue no ritmo para alcançar suas metas acadêmicas e evoluir nas disciplinas.
                 </p>
             </div>
             <div class="welcome-avatar-container">
-                👩‍🎓
+                🧑‍🎓
             </div>
         </div>
         """,

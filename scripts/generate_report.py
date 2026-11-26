@@ -430,7 +430,7 @@ def build_pdf_report(data: dict[str, Any], output_path: str | Path) -> Path:
     story = []
 
     # 1. Cabeçalho Institucional
-    story.append(Paragraph("🎓 EduTrack AI", style_title))
+    story.append(Paragraph("EduTrack AI", style_title))
     story.append(
         Paragraph(
             "Relatório de Desempenho e Progresso Acadêmico do Aluno",
@@ -511,7 +511,7 @@ def build_pdf_report(data: dict[str, Any], output_path: str | Path) -> Path:
     story.append(Spacer(1, 16))
 
     # 4. Tabela de Disciplinas e Desempenho
-    story.append(Paragraph("📊 Detalhamento por Disciplina", style_section))
+    story.append(Paragraph("Detalhamento por Disciplina", style_section))
 
     table_data = [
         [
@@ -571,7 +571,7 @@ def build_pdf_report(data: dict[str, Any], output_path: str | Path) -> Path:
     # 5. Tarefas Pendentes mais Relevantes (se houver)
     pendentes = data.get("pending_tasks_sample", [])
     if pendentes:
-        story.append(Paragraph("📝 Próximas Tarefas / Pendências", style_section))
+        story.append(Paragraph("Próximas Tarefas / Pendências", style_section))
         pending_rows = [
             [
                 Paragraph("ID", style_cell_bold),

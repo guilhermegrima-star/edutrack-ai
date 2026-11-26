@@ -165,7 +165,7 @@ def guard_authenticated_page(page_name: str = "esta página"):
                 border: 1px solid #E2E8F0;
                 box-shadow: 0 10px 25px rgba(0,0,0,0.05);
             ">
-                <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
+                <div style="font-size: 12px; letter-spacing: 0.12em; color: #2456A6; font-weight: 800; margin-bottom: 12px;">ACESSO RESTRITO</div>
                 <h2 style="color: #38337A; font-weight: 800; margin-bottom: 8px;">Acesso Restrito</h2>
                 <p style="color: #64748B; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
                     Para acessar {page_name}, você precisa estar autenticado na plataforma.
@@ -177,7 +177,7 @@ def guard_authenticated_page(page_name: str = "esta página"):
         )
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("⬅️ Ir para a Página Principal de Login", type="primary", use_container_width=True):
+            if st.button("Ir para a Página Principal de Login", type="primary", use_container_width=True):
                 if hasattr(st, "switch_page"):
                     try:
                         st.switch_page("app.py")

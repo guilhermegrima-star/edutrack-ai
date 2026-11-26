@@ -390,7 +390,7 @@ Retorne um objeto JSON com a seguinte estrutura para cada tópico vulnerável:
     {{
       "topic": "Nome do tópico vulnerável",
       "mastery": 45,
-      "alert": "⚠️ Alerta de Risco Máximo",
+      "alert": "Alerta de Risco Máximo",
       "key_concept": "Definição cirúrgica e o que mais costuma ser cobrado em provas",
       "recommended_action": "O que revisar e qual exercício rápido resolver nas próximas 2 horas",
       "formula_or_mnemonic": "Mnemônico, fórmula ou regra prática para não errar"
@@ -413,7 +413,7 @@ Retorne um objeto JSON com a seguinte estrutura para cada tópico vulnerável:
             valid_cards.append({
                 "topic": str(c["topic"]).strip(),
                 "mastery": float(c.get("mastery", 45)),
-                "alert": str(c.get("alert", "⚠️ Revisão Prioritária D-1")).strip(),
+                "alert": str(c.get("alert", "Revisão Prioritária D-1")).strip(),
                 "key_concept": str(c["key_concept"]).strip(),
                 "recommended_action": str(c.get("recommended_action", "Revisar resumo rápido")).strip(),
                 "formula_or_mnemonic": str(c.get("formula_or_mnemonic", "")).strip(),

@@ -389,7 +389,7 @@ if __name__ == "__main__":
 
     if not args.token:
         raise SystemExit(
-            "❌ Token de autenticação não informado. "
+            "Token de autenticação não informado. "
             "Use --token <JWT> ou defina a variável de ambiente EDUTRACK_TOKEN."
         )
 

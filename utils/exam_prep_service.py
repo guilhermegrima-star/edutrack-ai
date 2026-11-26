@@ -613,7 +613,7 @@ def get_d1_emergency_review(exam_id: int, use_ai: bool = True) -> dict[str, Any]
         cards_resumo.append({
             "topic": c["topic"],
             "mastery": c["mastery"],
-            "alert": "⚠️ Prioridade Máxima na Véspera",
+            "alert": "Prioridade Máxima na Véspera",
             "key_concept": f"Revisar definições-chave e resolver 3 questões de fixação rápida sobre {c['topic']}.",
             "recommended_action": "Ler resumo condensado e evitar memorização passiva sem exercícios.",
         })
