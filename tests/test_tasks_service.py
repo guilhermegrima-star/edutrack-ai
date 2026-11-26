@@ -150,7 +150,7 @@ class TestTasksService(unittest.TestCase):
                 status="Pendente",
                 subject_id=999,
             )
-        self.assertIn("não pertence ao usuário", str(ctx.exception).lower())
+        self.assertIn("não está vinculada à sua conta", str(ctx.exception).lower())
 
     @patch("utils.tasks_service.requests.post")
     def test_create_task_xano_success(self, mock_post):

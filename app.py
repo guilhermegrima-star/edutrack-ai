@@ -36,7 +36,6 @@ from utils.theme import (
     apply_dashboard_theme,
     render_landing_navbar,
     render_sidebar_header,
-    render_sidebar_pro_card,
     render_welcome_banner,
     render_kpi_cards,
 )
@@ -343,9 +342,6 @@ st.sidebar.markdown("---")
 # Link para a página de perfil no Streamlit
 if hasattr(st, "page_link"):
     st.sidebar.page_link("pages/3_🔒_Perfil.py", label="🔒 Meu Perfil & Relatórios", icon="👤")
-
-# Card Pro na Sidebar
-render_sidebar_pro_card()
 
 st.sidebar.markdown("---")
 
@@ -929,30 +925,21 @@ if opcao_menu == "Dashboard":
 # ABA 2: MY COURSES & GESTÃO DE OBRIGAÇÕES ACADÊMICAS (ACADEMIC TASKS)
 # -----------------------------------------------------------------------------
 elif opcao_menu == "Minhas Matérias":
-    st.markdown("## 📚 Minhas Disciplinas & Gestão de Obrigações Acadêmicas")
+    st.markdown("## 📚 Minhas Disciplinas")
     st.caption("Registre e acompanhe lições, provas e trabalhos vinculados a cada uma de suas disciplinas.")
 
-    # 1. Formulário para Registrar Nova Disciplina (Tabela subjects do Xano)
-    with st.expander("➕ Cadastrar Nova Matéria / Disciplina (table subjects)", expanded=False):
-        st.markdown(
-            """
-            <div style="font-size: 13px; color: #64748B; margin-bottom: 12px;">
-                Preencha os campos abaixo conforme o esquema definido na tabela <code>subjects</code> do Xano:
-                <b>name</b> (nome da matéria), <b>teacher</b> (docente), <b>hours</b> (carga horária) e cor de identificação visual.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    # 1. Cadastro de disciplina
+    with st.expander("➕ Cadastrar Nova Disciplina", expanded=False):
         with st.form("form_cadastrar_disciplina", clear_on_submit=True):
             col_s1, col_s2 = st.columns([2, 2])
             with col_s1:
-                sub_name = st.text_input("Nome da Disciplina (name) *", placeholder="Ex: Engenharia de Software, Cálculo I...")
+                sub_name = st.text_input("Nome da Disciplina *", placeholder="Ex: Engenharia de Software, Cálculo I...")
             with col_s2:
-                sub_teacher = st.text_input("Professor Responsável (teacher) *", placeholder="Ex: Prof. Dr. Silva, Profª. Mariana...")
+                sub_teacher = st.text_input("Professor Responsável *", placeholder="Ex: Prof. Dr. Silva, Profª. Mariana...")
 
             col_s3, col_s4 = st.columns(2)
             with col_s3:
-                sub_hours = st.number_input("Carga Horária em horas (hours) *", min_value=1, max_value=500, value=60, step=10)
+                sub_hours = st.number_input("Carga Horária (horas) *", min_value=1, max_value=500, value=60, step=10)
             with col_s4:
                 cores_disponiveis = {
                     "#6C5CE7": "Roxo Vibrante (#6C5CE7)",
@@ -1010,7 +997,7 @@ elif opcao_menu == "Minhas Matérias":
                 <div class="course-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                         <span style="font-size: 11px; font-weight: 700; color: {cor}; background: #F8F9FD; padding: 2px 8px; border-radius: 6px;">
-                            ID #{disc.get('id')} • {disc.get('hours', 60)}h
+                            {disc.get('hours', 60)} horas
                         </span>
                         <span style="font-size: 12px; font-weight: 700; color: #1E293B;">{prog['percent']}%</span>
                     </div>
@@ -1026,41 +1013,31 @@ elif opcao_menu == "Minhas Matérias":
 
     st.markdown("---")
 
-    # 2. Formulário para Registrar Nova Obrigação Acadêmica
-    with st.expander("➕ Cadastrar Nova Obrigação Acadêmica (Lição, Prova ou Trabalho)", expanded=False):
-        st.markdown(
-            """
-            <div style="font-size: 13px; color: #64748B; margin-bottom: 12px;">
-                Preencha os campos abaixo conforme o esquema definido na tabela <code>academic_tasks</code>:
-                <b>title</b>, <b>description</b>, <b>due_date</b>, <b>status</b> e <b>subject_id</b>.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
+    # 2. Cadastro de atividade
+    with st.expander("➕ Cadastrar Nova Atividade", expanded=False):
         with st.form("form_cadastrar_obrigacao", clear_on_submit=True):
             col_f_tit, col_f_disc = st.columns([2, 1])
 
             with col_f_tit:
                 task_title = st.text_input("Título da Obrigação Acadêmica *", placeholder="Ex: Prova Bimestral de UI/UX, Lista 2...")
             with col_f_disc:
-                nomes_disciplinas = {d["id"]: f"{d['name']} (ID: {d['id']})" for d in todas_disciplinas}
+                nomes_disciplinas = {d["id"]: d["name"] for d in todas_disciplinas}
                 selected_sub_id = st.selectbox(
-                    "Disciplina Vinculada (subject_id) *",
+                    "Disciplina *",
                     options=list(nomes_disciplinas.keys()),
                     format_func=lambda x: nomes_disciplinas[x],
                 )
 
             task_desc = st.text_area(
-                "Descrição / Critérios de Entrega (description)",
+                "Descrição / Orientações",
                 placeholder="Detalhes, capítulos para leitura, formato do arquivo ou orientações do docente...",
             )
 
             col_f_date, col_f_status = st.columns(2)
             with col_f_date:
-                task_date = st.date_input("Data de Entrega / Realização (due_date) *", value=datetime.date.today() + datetime.timedelta(days=7))
+                task_date = st.date_input("Data de Entrega / Realização *", value=datetime.date.today() + datetime.timedelta(days=7))
             with col_f_status:
-                task_status = st.selectbox("Status Inicial (status) *", ["Pendente", "Em Andamento", "Concluído"], index=0)
+                task_status = st.selectbox("Situação Inicial *", ["Pendente", "Em Andamento", "Concluído"], index=0)
 
             btn_salvar_task = st.form_submit_button("💾 Salvar Obrigação Acadêmica", type="primary", use_container_width=True)
 
@@ -1088,7 +1065,7 @@ elif opcao_menu == "Minhas Matérias":
         filtro_sub_id = st.selectbox(
             "Filtrar por Disciplina:",
             options=["Todas"] + [d["id"] for d in todas_disciplinas],
-            format_func=lambda x: "Todas as Disciplinas" if x == "Todas" else f"#{x} - {next((d['name'] for d in todas_disciplinas if d['id'] == x), '')}",
+            format_func=lambda x: "Todas as Disciplinas" if x == "Todas" else next((d["name"] for d in todas_disciplinas if d["id"] == x), ""),
         )
     with col_flt_stat:
         filtro_status_task = st.selectbox(
@@ -1116,7 +1093,7 @@ elif opcao_menu == "Minhas Matérias":
 
             # Nome da disciplina correspondente
             sub_obj = next((d for d in todas_disciplinas if int(d.get("id", 0)) == t_sub_id), None)
-            sub_name = sub_obj.get("name", f"Disciplina #{t_sub_id}") if sub_obj else f"Disciplina #{t_sub_id}"
+            sub_name = sub_obj.get("name", "Disciplina não identificada") if sub_obj else "Disciplina não identificada"
             sub_color = sub_obj.get("color", "#4E44B4") if sub_obj else "#4E44B4"
 
             # Badge do status
@@ -1135,7 +1112,7 @@ elif opcao_menu == "Minhas Matérias":
                     <div style="background: #FFFFFF; border: 1px solid #ECEFF7; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                             <span style="background: #F5EDFF; color: {sub_color}; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">
-                                {sub_name} (ID: {t_sub_id})
+                                {sub_name}
                             </span>
                             <div>{badge_html}</div>
                         </div>
@@ -1180,7 +1157,7 @@ elif opcao_menu == "Modo Prova":
                 """
                 <div style="text-align: right; margin-top: 8px;">
                     <span style="background: #ECFDF5; color: #047857; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 999px; border: 1px solid #A7F3D0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                        ✨ IA Gemini Ativa (gemini-3.5-flash-lite)
+                        ✨ Recursos de IA ativos
                     </span>
                 </div>
                 """,
@@ -1193,24 +1170,17 @@ elif opcao_menu == "Modo Prova":
                     """
                     <div style="text-align: right; margin-top: 6px;">
                         <span style="background: #F8FAFC; color: #64748B; font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 999px; border: 1px solid #CBD5E1;">
-                            ⚙️ Modo Heurístico Local
+                            ⚙️ Recursos inteligentes básicos
                         </span>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
             with c_pop:
-                with st.popover("🔑 Como ativar a IA?", use_container_width=True):
+                with st.popover("ℹ️ Sobre os recursos de IA", use_container_width=True):
                     st.markdown(
-                        """
-                        **Como habilitar o Google Gemini:**
-                        1. Abra ou crie o arquivo `.streamlit/secrets.toml`
-                        2. Insira sua chave obtida no [Google AI Studio](https://aistudio.google.com/app/apikey):
-                        ```toml
-                        GEMINI_API_KEY = "sua_chave_aqui"
-                        ```
-                        3. Ou defina a variável de ambiente `GEMINI_API_KEY`.
-                        """
+                        "A geração avançada com inteligência artificial está indisponível no momento. "
+                        "As ferramentas de estudo continuam funcionando normalmente."
                     )
 
     todas_provas = get_exams()

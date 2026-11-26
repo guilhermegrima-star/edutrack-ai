@@ -27,7 +27,6 @@ st.set_page_config(
 from utils.theme import (
     apply_dashboard_theme,
     render_sidebar_header,
-    render_sidebar_pro_card,
 )
 from utils.auth import (
     is_authenticated,
@@ -49,8 +48,6 @@ render_sidebar_header()
 st.sidebar.markdown("---")
 if hasattr(st, "page_link"):
     st.sidebar.page_link("app.py", label="⊞ Ir para o Dashboard", icon="📊")
-
-render_sidebar_pro_card()
 
 st.sidebar.markdown("---")
 if st.sidebar.button("🚪 Encerrar Sessão", use_container_width=True):
@@ -191,7 +188,7 @@ with col_det2:
                 🏢
             </div>
             <div>
-                <div class="kpi-label">Workspace / Turma</div>
+                <div class="kpi-label">Conta vinculada</div>
                 <div class="kpi-val" style="font-size: 20px; color: #475569;">Conta #{account_id}</div>
             </div>
         </div>
