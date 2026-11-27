@@ -12,4 +12,4 @@ Projeto da disciplina **Innovation Lab** - Faculdade Impacta
 - OpenSpec & Xano Script
 
 
-   ..\venv\Scripts\Activate.ps1
+   
