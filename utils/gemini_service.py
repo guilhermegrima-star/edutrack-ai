@@ -253,6 +253,7 @@ Tópicos prioritários / vulneráveis (Pontos Fracos do Aluno): {weak_str}
 Conteúdo base:
 \"\"\"{content}\"\"\"
 
+Use apenas texto simples e conciso nos campos. Não inclua código, HTML, JSON fora da estrutura solicitada ou blocos Markdown.
 Retorne uma lista JSON com até 7 dias planejados na seguinte estrutura:
 [
   {{

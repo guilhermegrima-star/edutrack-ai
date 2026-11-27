@@ -1326,7 +1326,28 @@ elif opcao_menu == "Modo Prova":
                 badge_bg = "#EDE9FE" if item_p.get("is_current") else "#F8FAFC"
                 badge_color = "#6C5CE7" if item_p.get("is_current") else "#475569"
                 borda = "2px solid #6C5CE7" if item_p.get("is_current") else "1px solid #E2E8F0"
-                technique_badge = f"<span style='font-size: 11px; color: #2456A6; background: #EAF1FB; padding: 2px 8px; border-radius: 4px; margin-left: 8px;'>{item_p['study_technique']}</span>" if item_p.get("study_technique") else ""
+                day_value = item_p.get("day")
+                date_value = item_p.get("date")
+                focus_value = item_p.get("focus")
+                technique_value = item_p.get("study_technique")
+                day = html.escape(day_value) if isinstance(day_value, str) else ""
+                date = html.escape(date_value) if isinstance(date_value, str) else ""
+                focus = html.escape(focus_value) if isinstance(focus_value, str) else "Estudo Ativo"
+                technique = html.escape(technique_value) if isinstance(technique_value, str) else ""
+                tasks = item_p.get("tasks") or []
+                if isinstance(tasks, str):
+                    tasks = [tasks]
+                elif not isinstance(tasks, (list, tuple)):
+                    tasks = []
+                tasks_text = ", ".join(
+                    html.escape(task.strip())
+                    for task in tasks
+                    if isinstance(task, str) and task.strip()
+                )
+                technique_badge = (
+                    f"<span style='font-size: 11px; color: #2456A6; background: #EAF1FB; padding: 2px 8px; border-radius: 4px; margin-left: 8px;'>{technique}</span>"
+                    if technique else ""
+                )
 
                 with st.container():
                     st.markdown(
@@ -1334,15 +1355,15 @@ elif opcao_menu == "Modo Prova":
                         <div style="background: #FFFFFF; border: {borda}; border-radius: 14px; padding: 16px; margin-bottom: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                                 <span style="background: {badge_bg}; color: {badge_color}; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 6px;">
-                                    {item_p['day']} • {item_p['date']}
+                                    {day} • {date}
                                 </span>
                                 <div>
-                                    <span style="font-size: 12px; font-weight: 700; color: #64748B;">{item_p['focus']}</span>
+                                    <span style="font-size: 12px; font-weight: 700; color: #64748B;">{focus}</span>
                                     {technique_badge}
                                 </div>
                             </div>
                             <div style="font-size: 13px; color: #334155; margin-top: 6px;">
-                                <b>Metas do Dia:</b> {', '.join(item_p['tasks'])}
+                                <b>Metas do Dia:</b> {tasks_text}
                             </div>
                         </div>
                         """,
