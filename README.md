@@ -1,7 +1,7 @@
 # 🎓 Edutrack AI
 
 Projeto da disciplina **Innovation Lab** - Faculdade Impacta  
-**Aluno:** Guilherme Grima  
+**Aluno:** Guilherme Grima, Kaleb Luiz, Murilo Ozuki, Matheus Campos, Kauã Pereira  
 **Ano:** 2026  
 
 ## 🛠️ Tecnologias Utilizadas
@@ -11,8 +11,5 @@ Projeto da disciplina **Innovation Lab** - Faculdade Impacta
 - Git & GitHub
 - OpenSpec & Xano Script
 
-## 🚀 Como Executar o Projeto
 
-1. **Ativar o ambiente virtual:**
-   ```powershell
    ..\venv\Scripts\Activate.ps1
